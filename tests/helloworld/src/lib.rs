@@ -1,0 +1,140 @@
+tonic::include_proto!("helloworld");
+
+#[cfg(test)]
+mod tests {
+    use std::{net::SocketAddr, time::Duration};
+
+    use tokio_util::sync::CancellationToken;
+    use tonic::{Request, Response, Status};
+
+    use super::*;
+
+    struct Greeter {}
+
+    #[tonic::async_trait]
+    impl greeter_server::Greeter for Greeter {
+        async fn say_hello(
+            &self,
+            request: Request<HelloRequest>,
+        ) -> Result<Response<HelloReply>, Status> {
+            let reply = HelloReply {
+                message: format!("Hello {}!", request.into_inner().name),
+            };
+            Ok(Response::new(reply))
+        }
+        async fn say_hello2(
+            &self,
+            request: Request<HelloRequest2>,
+        ) -> Result<Response<HelloReply2>, Status> {
+            let reply = HelloReply2 {
+                message: format!("Hello2 {}!", request.into_inner().name),
+            };
+            Ok(Response::new(reply))
+        }
+    }
+
+    struct Greeter2 {}
+
+    #[tonic::async_trait]
+    impl greeter2_server::Greeter2 for Greeter2 {
+        async fn say_hello(
+            &self,
+            request: Request<HelloRequest>,
+        ) -> Result<Response<HelloReply>, Status> {
+            let reply = HelloReply {
+                message: format!("2Hello {}!", request.into_inner().name),
+            };
+            Ok(Response::new(reply))
+        }
+        async fn say_hello2(
+            &self,
+            request: Request<HelloRequest2>,
+        ) -> Result<Response<HelloReply2>, Status> {
+            let request = request.into_inner();
+            let res = if let Some(f) = request.field1 {
+                format!(
+                    "name:{},fname:{},fcount:{},field2:{:?}",
+                    request.name, f.fname, f.fcount, request.field2
+                )
+            } else {
+                request.name
+            };
+            let reply = HelloReply2 {
+                message: format!("2Hello2 {}!", res),
+            };
+            Ok(Response::new(reply))
+        }
+    }
+
+    // creates a listener on a random port from os, and return the addr.
+    pub async fn create_listener_server() -> (tokio::net::TcpListener, std::net::SocketAddr) {
+        let addr: std::net::SocketAddr = "127.0.0.1:0".parse().unwrap();
+        let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+        let local_addr = listener.local_addr().unwrap();
+        (listener, local_addr)
+    }
+
+    async fn run_server_block(listener: tokio::net::TcpListener, token: CancellationToken) {
+        let greeter = Greeter {};
+        let greeter2 = Greeter2 {};
+        tonic::transport::Server::builder()
+            .add_service(greeter_server::GreeterServer::new(greeter))
+            .add_service(greeter2_server::Greeter2Server::new(greeter2))
+            .serve_with_incoming_shutdown(
+                tonic::transport::server::TcpIncoming::from(listener),
+                async move { token.cancelled().await },
+            )
+            .await
+            .unwrap();
+    }
+
+    async fn run_client(addr: SocketAddr, more_args: &[&str]) {
+        use std::process::Stdio;
+        use tokio::process::Command;
+        let shared_args = ["run", "--quiet", "--bin", "hwcli", "--", "--url"];
+        let mut child = Command::new("cargo")
+            .args(shared_args)
+            .arg(format!("http://{addr}"))
+            .args(more_args)
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .spawn()
+            .expect("fail to spawn");
+        let ec = child.wait().await.unwrap();
+        assert!(ec.success());
+    }
+
+    #[tokio::test]
+    async fn server_test() {
+        let (l, addr) = create_listener_server().await;
+        let token = CancellationToken::new();
+        let svh = {
+            let token = token.clone();
+            tokio::spawn(async move { run_server_block(l, token).await })
+        };
+
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        println!("running client");
+        run_client(addr, &["greeter", "say-hello", "--name", "n1"]).await;
+        run_client(addr, &["greeter", "say-hello2", "--name", "n2"]).await;
+        run_client(addr, &["greeter2", "say-hello", "--name", "2n1"]).await;
+        run_client(
+            addr,
+            &[
+                "greeter2",
+                "say-hello2",
+                "--name",
+                "2n2",
+                "--fcount",
+                "3",
+                "--field2",
+                "v1",
+                "--field2",
+                "v2",
+            ],
+        )
+        .await;
+        token.cancel();
+        svh.await.expect("task panic");
+    }
+}

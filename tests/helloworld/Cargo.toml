@@ -1,0 +1,23 @@
+[package]
+name = "helloworld"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "hwcli"
+path = "hwcli/main.rs"
+
+# [[bin]]
+# name = "clapcli"
+# path = "clapcli/main.rs"
+
+[dependencies]
+tonic.workspace = true
+prost.workspace = true
+tokio-util.workspace = true
+tokio.workspace = true
+clap.workspace = true
+clap_derive.workspace = true
+
+[build-dependencies]
+tonic-build.workspace = true

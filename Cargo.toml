@@ -1,0 +1,22 @@
+[workspace]
+resolver = "2"
+members = [ "tests/helloworld", "tests/hwcodgen",
+ "tonic-clap"
+, "tonic-clap-build"]
+
+[workspace.dependencies]
+prost-build = "0.13"
+# proc-macro2 = "1.0"
+# quote = "1.0"
+tonic-build = "0.13"
+tonic = "0.13"
+prost = "0.13"
+tokio = {version = "1", features = ["process"]}
+tokio-util = "0.7"
+clap = { version = "4", features = ["derive"]}
+clap_derive = "4"
+proc-macro2 = "1"
+quote = "1"
+
+# crate in this workspace
+tonic-clap-build = { path = "tonic-clap-build" }
