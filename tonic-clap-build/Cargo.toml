@@ -2,6 +2,14 @@
 name = "tonic-clap-build"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
+authors = ["youyuanwu@outlook.com"]
+repository = "https://github.com/youyuanwu/tonic-clap"
+documentation = "https://docs.rs/tonic-clap-build/latest/tonic_clap_build/"
+description = "gRPC tonic cli generator"
+categories = ["web-programming", "network-programming"]
+keywords = ["gRPC", "tonic", "clap"]
+readme = "../README.md"
 
 [dependencies]
 prost-build.workspace = true
