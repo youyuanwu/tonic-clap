@@ -1,6 +1,6 @@
-use clap::Parser;
+include!("../gen/helloworld.rs");
 
-mod cligen;
+use clap::Parser;
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
@@ -13,7 +13,7 @@ struct Args {
     json_data: Option<String>,
 
     #[command(subcommand)]
-    command: cligen::CommandServices,
+    command: CommandServices,
 }
 
 async fn connect(url: String) -> tonic::transport::Channel {

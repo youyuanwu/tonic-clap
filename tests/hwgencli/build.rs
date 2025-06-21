@@ -9,7 +9,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("out {}", path.display());
 
-    let mut builder = tonic_clap_build::configure();
+    let mut builder = tonic_clap_build::configure().with_tonic_server(false);
     builder.get_cfg().out_dir(&path);
 
     let proto_file = Path::new("../../protos/helloworld.proto");
@@ -18,19 +18,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     assert!(proto_dir.exists());
     assert!(path.exists());
     builder.compile(&[proto_file], &[proto_dir]).unwrap();
-
-    // {
-    //      // Generate Prost types only
-    // prost_build::Config::new()
-    //     .out_dir(&path.join("prost"))
-    //     .compile_protos(&[proto_file], &[proto_dir])?;
-
-    // // Generate Tonic service code only
-    // tonic_build::configure()
-    //     .build_client(true)
-    //     .build_server(false)
-    //     .out_dir(&path.join("tonic"))
-    //     .compile_protos(&[proto_file], &[proto_dir])?;
-    // }
     Ok(())
 }

@@ -1,8 +1,11 @@
 [workspace]
 resolver = "2"
-members = [ "tests/helloworld", "tests/hwcodgen",
- "tonic-clap"
-, "tonic-clap-build"]
+members = [ 
+  "tests/helloworld", 
+  "tests/hwgencli",
+  "tonic-clap",
+  "tonic-clap-build"
+]
 
 [workspace.dependencies]
 prost-build = "0.13"
@@ -17,6 +20,11 @@ clap = { version = "4", features = ["derive"]}
 clap_derive = "4"
 proc-macro2 = "1"
 quote = "1"
+syn = "2"
+serde = { version = "1", features = ["serde_derive"] }
+serde_json = "1"
+heck = "0.5"
 
 # crate in this workspace
 tonic-clap-build = { path = "tonic-clap-build" }
+tonic-clap = {path = "tonic-clap"}

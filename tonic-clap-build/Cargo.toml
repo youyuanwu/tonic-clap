@@ -8,3 +8,4 @@ prost-build.workspace = true
 proc-macro2.workspace = true
 quote.workspace = true
 tonic-build.workspace = true
+heck.workspace = true

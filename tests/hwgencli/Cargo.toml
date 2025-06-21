@@ -1,22 +1,16 @@
 [package]
-name = "helloworld"
+name = "hwgencli"
 version = "0.1.0"
 edition = "2024"
 publish = false
 
-[[bin]]
-name = "hwcli"
-path = "hwcli/main.rs"
-
 [dependencies]
 tonic.workspace = true
 prost.workspace = true
-tokio-util.workspace = true
-tokio.workspace = true
 clap.workspace = true
-clap_derive.workspace = true
-serde_json.workspace = true
 serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
 
 [build-dependencies]
 tonic-clap-build.workspace = true

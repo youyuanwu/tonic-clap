@@ -1,7 +1,7 @@
 use std::{io, path::Path};
 
 use code_gen::ServiceGenerator;
-use prost_build::Config;
+use tonic_build::Config;
 
 use crate::multi_gen::MultiGen;
 
@@ -13,10 +13,14 @@ mod multi_gen;
 // code gen builder
 pub struct Builder {
     cfg: Config,
+    tonic_server: bool,
 }
 
 pub fn configure() -> Builder {
-    Builder { cfg: Config::new() }
+    Builder {
+        cfg: Config::new(),
+        tonic_server: true,
+    }
 }
 
 impl Builder {
@@ -28,17 +32,28 @@ impl Builder {
     ) -> io::Result<()> {
         // merge tonic gen and clap gen.
         let g1 = tonic_build::configure()
-            .build_server(false)
+            .build_server(self.tonic_server)
             .service_generator();
         let g2 = self.service_generator();
         let g = MultiGen::new(g1, g2);
         self.cfg.service_generator(Box::new(g));
+        // add clap attr
+        self.cfg
+            .type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");
+        // self.cfg
+        //     .field_attribute(".", "#[arg(long, default_value = \"\")]");
+        self.cfg.compile_well_known_types();
         self.cfg.compile_protos(protos, includes)?;
         Ok(())
     }
 
     pub fn get_cfg(&mut self) -> &mut Config {
         &mut self.cfg
+    }
+
+    pub fn with_tonic_server(mut self, server: bool) -> Self {
+        self.tonic_server = server;
+        self
     }
 
     // turn builder into generator

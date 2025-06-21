@@ -1,3 +1,5 @@
+use helloworld::{EnumOk, HelloRequest};
+
 #[derive(clap::Subcommand, Debug)]
 pub enum CommandServices {
     /// greeter service
@@ -23,11 +25,16 @@ impl GreeterCommands {
     async fn execute(
         &self,
         ch: tonic::transport::Channel,
+        json_data: Option<String>,
     ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {
         let mut c = helloworld::greeter_client::GreeterClient::new(ch);
         match self {
             GreeterCommands::SayHello(args) => {
-                let request = tonic::Request::new((*args).clone().into());
+                let mut request: HelloRequest = match json_data {
+                    Some(data) => serde_json::from_str(&data).unwrap(),
+                    None => Default::default(),
+                };
+                args.apply(&mut request);
                 Ok(Box::new(c.say_hello(request).await?))
             }
             GreeterCommands::SayHello2(args) => {
@@ -46,7 +53,8 @@ impl Greeter2Commands {
         let mut c = helloworld::greeter2_client::Greeter2Client::new(ch);
         match self {
             Greeter2Commands::SayHello(args) => {
-                let request = tonic::Request::new((*args).clone().into());
+                let mut request = HelloRequest::default();
+                args.apply(&mut request);
                 Ok(Box::new(c.say_hello(request).await?))
             }
             Greeter2Commands::SayHello2(args) => {
@@ -61,9 +69,10 @@ impl CommandServices {
     pub async fn execute(
         &self,
         ch: tonic::transport::Channel,
+        json_data: Option<String>,
     ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {
         match self {
-            CommandServices::Greeter(cmd) => cmd.execute(ch).await,
+            CommandServices::Greeter(cmd) => cmd.execute(ch, json_data).await,
             CommandServices::Greeter2(cmd) => cmd.execute(ch).await,
         }
     }
@@ -71,13 +80,13 @@ impl CommandServices {
 
 #[derive(clap::Args, Debug, Clone)]
 pub struct HelloRequestArg {
-    #[arg(short, long, default_value = "")]
-    name: String,
+    #[arg(short, long)]
+    name: Option<String>,
 }
 
-impl From<HelloRequestArg> for helloworld::HelloRequest {
-    fn from(value: HelloRequestArg) -> Self {
-        Self { name: value.name }
+impl HelloRequestArg {
+    pub fn apply(&self, r: &mut HelloRequest) {
+        self.name.clone().inspect(|opt| r.name = opt.to_owned());
     }
 }
 
@@ -107,6 +116,7 @@ impl From<HelloRequest2Arg> for helloworld::HelloRequest2 {
             name: value.name,
             field1: value.field1.map(|f| f.into()),
             field2: value.field2,
+            field3: EnumOk::Ok1.into(),
         }
     }
 }
