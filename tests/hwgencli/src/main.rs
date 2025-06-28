@@ -1,4 +1,11 @@
-include!("../gen/helloworld.rs");
+pub mod helloworld {
+    include!("../gen/helloworld.rs");
+    pub mod google {
+        pub mod protobuf {
+            include!("../gen/google.protobuf.rs");
+        }
+    }
+}
 
 use clap::Parser;
 
@@ -13,7 +20,7 @@ struct Args {
     json_data: Option<String>,
 
     #[command(subcommand)]
-    command: CommandServices,
+    command: helloworld::cli::CommandServices,
 }
 
 async fn connect(url: String) -> tonic::transport::Channel {

@@ -1009,12 +1009,13 @@ dependencies = [
 
 [[package]]
 name = "tonic-clap-build"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "heck",
  "proc-macro2",
  "prost-build",
  "quote",
+ "syn",
  "tonic-build",
 ]
 

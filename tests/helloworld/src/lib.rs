@@ -1,4 +1,11 @@
-tonic::include_proto!("helloworld");
+pub mod helloworld {
+    tonic::include_proto!("helloworld");
+    pub mod google {
+        pub mod protobuf {
+            tonic::include_proto!("google.protobuf");
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -7,7 +14,9 @@ mod tests {
     use tokio_util::sync::CancellationToken;
     use tonic::{Request, Response, Status};
 
-    use super::*;
+    use crate::helloworld::google::protobuf;
+
+    use super::helloworld::*;
 
     struct Greeter {}
 
@@ -60,6 +69,16 @@ mod tests {
             );
             let reply = HelloReply2 {
                 message: format!("2Hello2 {}!", res),
+            };
+            Ok(Response::new(reply))
+        }
+
+        async fn say_hello3(
+            &self,
+            _request: Request<protobuf::Empty>,
+        ) -> Result<Response<HelloReply>, Status> {
+            let reply = HelloReply {
+                message: "2Hello3 Empty!".to_string(),
             };
             Ok(Response::new(reply))
         }
@@ -172,6 +191,17 @@ mod tests {
                 r#"{ "name": "n", "field2": [], "field3": 1 }"#, // enum is number in serde
                 "greeter2",
                 "say-hello2",
+            ],
+        )
+        .await;
+
+        run_client_gen(
+            addr,
+            &[
+                "--json-data",
+                r#"{}"#, // Empty data
+                "greeter2",
+                "say-hello3",
             ],
         )
         .await;

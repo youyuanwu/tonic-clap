@@ -40,6 +40,7 @@ impl Builder {
         // add clap attr
         self.cfg
             .type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");
+        self.cfg.disable_comments(&["."]);
         // self.cfg
         //     .field_attribute(".", "#[arg(long, default_value = \"\")]");
         self.cfg.compile_well_known_types();

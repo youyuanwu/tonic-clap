@@ -24,16 +24,29 @@ impl prost_build::ServiceGenerator for ServiceGenerator {
     }
 
     fn finalize(&mut self, buf: &mut String) {
+        // skip empty pkg
+        if self.services.is_empty() {
+            return;
+        }
+
         let builder = CodeGenBuilder {};
 
+        let mut total_code = TokenStream::new();
+
         let svc_enum = builder.generate_cmd_services_enum(&self.services);
-        buf.push_str(svc_enum.to_string().as_str());
+        total_code.extend(svc_enum);
         // generate svc enum
         // generate method enum
         for svc in &self.services {
             let method_enum = builder.generate_svc_method_enum(svc);
-            buf.push_str(&method_enum.to_string());
+            total_code.extend(method_enum);
         }
+        let result = quote! {
+            pub mod cli{
+                #total_code
+            }
+        };
+        buf.push_str(&result.to_string());
     }
 }
 
@@ -96,11 +109,17 @@ impl CodeGenBuilder {
             method_enum_stream.extend(enum_tokens);
 
             // execution branch
-            let request = quote::format_ident!("{}", m.input_type);
+            let input_type: syn::Path = if m.input_type.starts_with("super") {
+                // external type
+                syn::parse_str(&m.input_type).unwrap()
+            } else {
+                // type in the same pkg
+                syn::parse_str(&format!("super::{}", m.input_type)).unwrap()
+            };
             let method_name = quote::format_ident!("{}", m.name);
             let method_call = quote! {
                 #svc_enum_name::#method_enum_val => {
-                    let request: #request = match json_data {
+                    let request: #input_type = match json_data {
                         Some(data) => serde_json::from_str(&data).unwrap(),
                         None => Default::default(),
                     };
@@ -120,7 +139,7 @@ impl CodeGenBuilder {
                     ch: tonic::transport::Channel,
                     json_data: Option<String>,
                 ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {
-                    let mut c = #client_mod_name::#client_name::new(ch);
+                    let mut c = super::#client_mod_name::#client_name::new(ch);
                     match self {
                         #method_call_stream
                     }
