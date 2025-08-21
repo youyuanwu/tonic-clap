@@ -108,14 +108,11 @@ impl CodeGenBuilder {
             };
             method_enum_stream.extend(enum_tokens);
 
-            // execution branch
-            let input_type: syn::Path = if m.input_type.starts_with("super") {
-                // external type
-                syn::parse_str(&m.input_type).unwrap()
-            } else {
-                // type in the same pkg
-                syn::parse_str(&format!("super::{}", m.input_type)).unwrap()
-            };
+            // type in the same pkg
+            // it is in the outer mod.
+            let input_type: syn::Path =
+                syn::parse_str(&format!("super::{}", m.input_type)).unwrap();
+
             let method_name = quote::format_ident!("{}", m.name);
             let method_call = quote! {
                 #svc_enum_name::#method_enum_val => {

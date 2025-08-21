@@ -1,9 +1,9 @@
 pub mod helloworld {
     include!("../gen/helloworld.rs");
-    pub mod google {
-        pub mod protobuf {
-            include!("../gen/google.protobuf.rs");
-        }
+}
+pub mod google {
+    pub mod protobuf {
+        include!("../gen/google.protobuf.rs");
     }
 }
 

@@ -1,7 +1,7 @@
 use std::{io, path::Path};
 
 use code_gen::ServiceGenerator;
-use tonic_build::Config;
+use tonic_prost_build::Config;
 
 use crate::multi_gen::MultiGen;
 
@@ -31,7 +31,7 @@ impl Builder {
         includes: &[impl AsRef<Path>],
     ) -> io::Result<()> {
         // merge tonic gen and clap gen.
-        let g1 = tonic_build::configure()
+        let g1 = tonic_prost_build::configure()
             .build_server(self.tonic_server)
             .service_generator();
         let g2 = self.service_generator();
@@ -40,7 +40,7 @@ impl Builder {
         // add clap attr
         self.cfg
             .type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");
-        self.cfg.disable_comments(&["."]);
+        self.cfg.disable_comments(["."]);
         // self.cfg
         //     .field_attribute(".", "#[arg(long, default_value = \"\")]");
         self.cfg.compile_well_known_types();

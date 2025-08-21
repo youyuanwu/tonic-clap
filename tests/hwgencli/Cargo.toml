@@ -6,6 +6,7 @@ publish = false
 
 [dependencies]
 tonic.workspace = true
+tonic-prost.workspace = true
 prost.workspace = true
 clap.workspace = true
 serde.workspace = true

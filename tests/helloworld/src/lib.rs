@@ -1,9 +1,9 @@
 pub mod helloworld {
     tonic::include_proto!("helloworld");
-    pub mod google {
-        pub mod protobuf {
-            tonic::include_proto!("google.protobuf");
-        }
+}
+pub mod google {
+    pub mod protobuf {
+        tonic::include_proto!("google.protobuf");
     }
 }
 
@@ -14,7 +14,7 @@ mod tests {
     use tokio_util::sync::CancellationToken;
     use tonic::{Request, Response, Status};
 
-    use crate::helloworld::google::protobuf;
+    use crate::google::protobuf;
 
     use super::helloworld::*;
 

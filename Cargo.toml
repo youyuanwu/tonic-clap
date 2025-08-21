@@ -8,12 +8,13 @@ members = [
 ]
 
 [workspace.dependencies]
-prost-build = "0.13"
+prost-build = "0.14"
 # proc-macro2 = "1.0"
 # quote = "1.0"
-tonic-build = "0.13"
-tonic = "0.13"
-prost = "0.13"
+tonic-prost-build = "0.14"
+tonic-prost = "0.14"
+tonic = "0.14"
+prost = "0.14"
 tokio = {version = "1", features = ["process"]}
 tokio-util = "0.7"
 clap = { version = "4", features = ["derive"]}

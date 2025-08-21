@@ -10,6 +10,7 @@ path = "hwcli/main.rs"
 
 [dependencies]
 tonic.workspace = true
+tonic-prost.workspace = true
 prost.workspace = true
 tokio-util.workspace = true
 tokio.workspace = true

@@ -15,6 +15,6 @@ readme = "../README.md"
 prost-build.workspace = true
 proc-macro2.workspace = true
 quote.workspace = true
-tonic-build.workspace = true
+tonic-prost-build.workspace = true
 heck.workspace = true
 syn.workspace = true
