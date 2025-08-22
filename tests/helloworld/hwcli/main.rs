@@ -12,8 +12,8 @@ struct Args {
     #[arg(short, long)]
     json_data: Option<String>,
 
-    #[command(subcommand)]
-    command: cligen::CommandServices,
+    // #[command(subcommand)]
+    // command: cligen::CommandServices,
 }
 
 async fn connect(url: String) -> tonic::transport::Channel {
@@ -29,10 +29,10 @@ async fn main() {
 
     let ch = connect(args.url.unwrap()).await;
 
-    let resp = args
-        .command
-        .execute(ch, args.json_data)
-        .await
-        .expect("request failed");
-    println!("RESPONSE={:?}", resp);
+    // let resp = args
+    //     .command
+    //     .execute(ch, args.json_data)
+    //     .await
+    //     .expect("request failed");
+    // println!("RESPONSE={:?}", resp);
 }

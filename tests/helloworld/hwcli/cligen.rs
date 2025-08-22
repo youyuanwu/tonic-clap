@@ -1,113 +1,117 @@
-use helloworld::helloworld::{EnumOk, HelloRequest};
+// use helloworld::helloworld::{EnumOk, HelloRequest};
 
-#[derive(clap::Subcommand, Debug)]
-pub enum CommandServices {
-    /// greeter service
-    #[command(subcommand)]
-    Greeter(GreeterCommands),
-    #[command(subcommand)]
-    Greeter2(Greeter2Commands),
-}
+// #[derive(clap::Subcommand, Debug)]
+// pub enum CommandServices {
+//     /// greeter service
+//     #[command(subcommand)]
+//     Greeter(GreeterCommands),
+//     #[command(subcommand)]
+//     Greeter2(Greeter2Commands),
+// }
 
-#[derive(clap::Subcommand, Debug)]
-pub enum GreeterCommands {
-    SayHello(HelloRequestArg),
-    SayHello2(HelloRequest2Arg),
-}
+// #[derive(clap::Subcommand, Debug)]
+// pub enum GreeterCommands {
+//     SayHello(HelloRequestArg),
+//     SayHello2(HelloRequest2Arg),
+// }
 
-#[derive(clap::Subcommand, Debug)]
-pub enum Greeter2Commands {
-    SayHello(HelloRequestArg),
-    SayHello2(HelloRequest2Arg),
-}
+// #[derive(clap::Subcommand, Debug)]
+// pub enum Greeter2Commands {
+//     SayHello(HelloRequestArg),
+//     SayHello2(HelloRequest2Arg),
+// }
 
-impl GreeterCommands {
-    async fn execute(
-        &self,
-        ch: tonic::transport::Channel,
-        json_data: Option<String>,
-    ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {
-        let mut c = helloworld::helloworld::greeter_client::GreeterClient::new(ch);
-        match self {
-            GreeterCommands::SayHello(args) => {
-                let mut request: HelloRequest = match json_data {
-                    Some(data) => serde_json::from_str(&data).unwrap(),
-                    None => Default::default(),
-                };
-                args.apply(&mut request);
-                Ok(Box::new(c.say_hello(request).await?))
-            }
-            GreeterCommands::SayHello2(args) => {
-                let request = tonic::Request::new((*args).clone().into());
-                Ok(Box::new(c.say_hello2(request).await?))
-            }
-        }
-    }
-}
+// impl GreeterCommands {
+//     async fn execute(
+//         &self,
+//         ch: tonic::transport::Channel,
+//         json_data: Option<String>,
+//     ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {
+//         let mut c = helloworld::helloworld::greeter_client::GreeterClient::new(ch);
+//         match self {
+//             GreeterCommands::SayHello(args) => {
+//                 let mut request: HelloRequest = match json_data {
+//                     Some(data) => serde_json::from_str(&data).unwrap(),
+//                     None => Default::default(),
+//                 };
+//                 args.apply(&mut request);
+//                 Ok(Box::new(c.say_hello(request).await?))
+//             }
+//             GreeterCommands::SayHello2(args) => {
+//                 let request = tonic::Request::new((*args).clone().into());
+//                 Ok(Box::new(c.say_hello2(request).await?))
+//             }
+//         }
+//     }
+// }
 
-impl Greeter2Commands {
-    async fn execute(
-        &self,
-        ch: tonic::transport::Channel,
-    ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {
-        let mut c = helloworld::helloworld::greeter2_client::Greeter2Client::new(ch);
-        match self {
-            Greeter2Commands::SayHello(args) => {
-                let mut request = HelloRequest::default();
-                args.apply(&mut request);
-                Ok(Box::new(c.say_hello(request).await?))
-            }
-            Greeter2Commands::SayHello2(args) => {
-                let request = tonic::Request::new((*args).clone().into());
-                Ok(Box::new(c.say_hello2(request).await?))
-            }
-        }
-    }
-}
+// impl Greeter2Commands {
+//     async fn execute(
+//         &self,
+//         ch: tonic::transport::Channel,
+//     ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {
+//         let mut c = helloworld::helloworld::greeter2_client::Greeter2Client::new(ch);
+//         match self {
+//             Greeter2Commands::SayHello(args) => {
+//                 let mut request = HelloRequest::default();
+//                 args.apply(&mut request);
+//                 Ok(Box::new(c.say_hello(request).await?))
+//             }
+//             Greeter2Commands::SayHello2(args) => {
+//                 let request = tonic::Request::new((*args).clone().into());
+//                 Ok(Box::new(c.say_hello2(request).await?))
+//             }
+//         }
+//     }
+// }
 
-impl CommandServices {
-    pub async fn execute(
-        &self,
-        ch: tonic::transport::Channel,
-        json_data: Option<String>,
-    ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {
-        match self {
-            CommandServices::Greeter(cmd) => cmd.execute(ch, json_data).await,
-            CommandServices::Greeter2(cmd) => cmd.execute(ch).await,
-        }
-    }
-}
+// impl CommandServices {
+//     pub async fn execute(
+//         &self,
+//         ch: tonic::transport::Channel,
+//         json_data: Option<String>,
+//     ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {
+//         match self {
+//             CommandServices::Greeter(cmd) => cmd.execute(ch, json_data).await,
+//             CommandServices::Greeter2(cmd) => cmd.execute(ch).await,
+//         }
+//     }
+// }
 
-#[derive(clap::Args, Debug, Clone)]
-pub struct HelloRequestArg {
-    #[arg(short, long)]
-    name: Option<String>,
-}
+// #[derive(clap::Args, Debug, Clone)]
+// pub struct HelloRequestArg {
+//     #[arg(short, long)]
+//     name: Option<String>,
+// }
 
-impl HelloRequestArg {
-    pub fn apply(&self, r: &mut HelloRequest) {
-        self.name.clone().inspect(|opt| r.name = opt.to_owned());
-    }
-}
+// impl HelloRequestArg {
+//     pub fn apply(&self, r: &mut HelloRequest) {
+//         self.name.clone().inspect(|opt| r.name = opt.to_owned());
+//     }
+// }
 
+// TODO: a macro should generate the nested arg.
+// Commented out manual structs - these should be generated by the ClapArgs macro
+
+/*
 #[derive(clap::Args, Debug, Clone)]
 pub struct HelloRequest2Arg {
     #[arg(long, default_value = "")]
     name: String,
 
     #[command(flatten)]
-    field1: Option<Field1Arg>,
+    field1: Option<HelloRequest2Field1Arg>,
 
     #[arg(long, default_value = "")]
     field2: Vec<String>,
 }
 
 #[derive(clap::Args, Debug, Clone)]
-pub struct Field1Arg {
+pub struct HelloRequest2Field1Arg {
     #[arg(long, default_value = "")]
-    fname: String,
+    field1_fname: String,
     #[arg(long, default_value = "0")]
-    fcount: i32,
+    field1_fcount: i32,
 }
 
 impl From<HelloRequest2Arg> for helloworld::helloworld::HelloRequest2 {
@@ -121,11 +125,116 @@ impl From<HelloRequest2Arg> for helloworld::helloworld::HelloRequest2 {
     }
 }
 
-impl From<Field1Arg> for helloworld::helloworld::Field1 {
-    fn from(value: Field1Arg) -> Self {
+impl From<HelloRequest2Field1Arg> for helloworld::helloworld::Field1 {
+    fn from(value: HelloRequest2Field1Arg) -> Self {
         Self {
-            fname: value.fname,
-            fcount: value.fcount,
+            fname: value.field1_fname,
+            fcount: value.field1_fcount,
         }
+    }
+}
+*/
+
+mod tests {
+
+    use tonic_clap::ClapArgs;
+
+    // Add a derive macro that can generate the args struct
+    #[derive(
+        serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Hash, ::prost::Message, ClapArgs,
+    )]
+    pub struct HelloRequest2 {
+        #[prost(string, tag = "1")]
+        pub name: ::prost::alloc::string::String,
+        #[prost(message, optional, tag = "2")]
+        #[prefix = "field1"]  // This will use "field1" as prefix instead of "field1"
+        pub field1: ::core::option::Option<Field1>,
+        #[prost(string, repeated, tag = "3")]
+        pub field2: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        #[prost(enumeration = "EnumOk", tag = "4")]
+        pub field3: i32,
+    }
+    #[derive(
+        serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Hash, ::prost::Message, ClapArgs,
+    )]
+    pub struct Field1 {
+        #[prost(string, tag = "1")]
+        pub fname: ::prost::alloc::string::String,
+        #[prost(int32, tag = "2")]
+        pub fcount: i32,
+    }
+
+    #[derive(
+        serde::Serialize,
+        serde::Deserialize,
+        Clone,
+        Copy,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+        PartialOrd,
+        Ord,
+        ::prost::Enumeration,
+    )]
+    #[repr(i32)]
+    pub enum EnumOk {
+        Ok1 = 0,
+        Ok2 = 1,
+    }
+
+    #[test]
+    fn test_generated_args() {
+        // The macro now uses generic wrapper approach (no hardcoding!)
+        // Test that we can create the generated Args struct
+        let args = HelloRequest2Arg {
+            name: Some("test".to_string()),
+            field1: Some(HelloRequest2Field1Arg {
+                inner: Some(Field1Arg {
+                    fname: Some("nested_value".to_string()),
+                    fcount: Some("42".to_string()),
+                })
+            }),
+            field2: vec!["item1".to_string(), "item2".to_string()],
+            field3: Some("0".to_string()),
+        };
+
+        // Test conversion to original struct
+        let request: HelloRequest2 = args.into();
+        assert_eq!(request.name, "test");
+        assert_eq!(request.field2, vec!["item1", "item2"]);
+
+        // Test that nested field was converted correctly
+        assert!(request.field1.is_some());
+        let field1 = request.field1.unwrap();
+        assert_eq!(field1.fname, "nested_value");
+        assert_eq!(field1.fcount, 42);
+
+        println!("Generated Args struct with nested field wrappers works correctly!");
+    }
+
+    #[test]
+    fn test_prefixed_field_names() {
+        // Test the generic wrapper approach with any nested type
+        let args = HelloRequest2Arg {
+            name: Some("test".to_string()),
+            field1: Some(HelloRequest2Field1Arg {
+                inner: Some(Field1Arg {
+                    fname: Some("prefixed_name".to_string()),
+                    fcount: Some("100".to_string()),
+                })
+            }),
+            field2: vec![],
+            field3: Some("0".to_string()),
+        };
+
+        let request: HelloRequest2 = args.into();
+        assert_eq!(request.name, "test");
+        assert!(request.field1.is_some());
+        let field1 = request.field1.unwrap();
+        assert_eq!(field1.fname, "prefixed_name");
+        assert_eq!(field1.fcount, 100);
+
+        println!("Direct prefixed fields work correctly!");
     }
 }

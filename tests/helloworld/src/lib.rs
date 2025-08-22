@@ -143,36 +143,38 @@ mod tests {
         };
 
         tokio::time::sleep(Duration::from_secs(1)).await;
-        println!("running client");
-        run_client_manual(addr, &["greeter", "say-hello", "--name", "n1"]).await;
-        run_client_manual(addr, &["greeter", "say-hello2", "--name", "n2"]).await;
-        run_client_manual(addr, &["greeter2", "say-hello", "--name", "2n1"]).await;
-        run_client_manual(
-            addr,
-            &[
-                "greeter2",
-                "say-hello2",
-                "--name",
-                "2n2",
-                "--fcount",
-                "3",
-                "--field2",
-                "v1",
-                "--field2",
-                "v2",
-            ],
-        )
-        .await;
-        run_client_manual(
-            addr,
-            &[
-                "--json-data",
-                r#"{ "name": "json_name" }"#,
-                "greeter",
-                "say-hello",
-            ],
-        )
-        .await;
+        // println!("running client");
+        // run_client_manual(addr, &["greeter", "say-hello", "--name", "n1"]).await;
+        // run_client_manual(addr, &["greeter", "say-hello2", "--name", "n2"]).await;
+        // run_client_manual(addr, &["greeter2", "say-hello", "--name", "2n1"]).await;
+        // run_client_manual(
+        //     addr,
+        //     &[
+        //         "greeter2",
+        //         "say-hello2",
+        //         "--name",
+        //         "2n2",
+        //         "--field1-fname",
+        //         "2fn",
+        //         "--field1-fcount",
+        //         "3",
+        //         "--field2",
+        //         "v1",
+        //         "--field2",
+        //         "v2",
+        //     ],
+        // )
+        // .await;
+        // run_client_manual(
+        //     addr,
+        //     &[
+        //         "--json-data",
+        //         r#"{ "name": "json_name" }"#,
+        //         "greeter",
+        //         "say-hello",
+        //     ],
+        // )
+        // .await;
 
         run_client_gen(
             addr,
