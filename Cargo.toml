@@ -1,16 +1,23 @@
 [workspace]
 resolver = "2"
 members = [ 
-  "tests/helloworld", 
-  "tests/hwgencli",
+  "tonic-clap-tests/helloworld", 
+  "tonic-clap-tests/hwgencli",
   "tonic-clap-macros",
-  "tonic-clap-build"
-, "tonic-clap"]
+  "tonic-clap-build",
+  "tonic-clap"
+]
+package.edition = "2024"
+package.authors = [ "youyuanwu@outlook.com" ]
+package.documentation = "https://docs.rs/tonic-clap-build/latest/tonic_clap_build/"
+package.repository = "https://github.com/youyuanwu/tonic-clap"
+package.license = "MIT"
+package.readme = "./README.md"
+package.categories = ["web-programming", "network-programming"]
+package.keywords = ["gRPC", "tonic", "clap", "cli"]
 
 [workspace.dependencies]
 prost-build = "0.14"
-# proc-macro2 = "1.0"
-# quote = "1.0"
 tonic-prost-build = "0.14"
 tonic-prost = "0.14"
 tonic = "0.14"
