@@ -47,6 +47,7 @@ impl prost_build::ServiceGenerator for ServiceGenerator {
             }
         };
         buf.push_str(&result.to_string());
+        self.services.clear();
     }
 }
 
@@ -102,6 +103,10 @@ impl CodeGenBuilder {
         let mut method_enum_stream = TokenStream::new();
         let mut method_call_stream = TokenStream::new();
         for m in &svc.methods {
+            if m.server_streaming || m.client_streaming {
+                // skip streaming methods for now.
+                continue;
+            }
             let method_enum_val = quote::format_ident!("{}", m.name.to_upper_camel_case());
             // type in the same pkg
             // it is in the outer mod.

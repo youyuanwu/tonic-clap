@@ -66,15 +66,20 @@ impl Builder {
 }
 
 /// Public entrypoint to the build
-pub fn compile_protos(proto: impl AsRef<Path>) -> io::Result<()> {
-    let proto_path: &Path = proto.as_ref();
+pub fn compile_protos(protos: &[impl AsRef<Path>]) -> io::Result<()> {
+    let proto_paths = protos;
 
     // directory the main .proto file resides in
-    let proto_dir = proto_path
-        .parent()
-        .expect("proto file should reside in a directory");
-
-    self::configure().compile(&[proto_path], &[proto_dir])?;
+    let proto_dirs = proto_paths
+        .iter()
+        .map(|proto_path| {
+            proto_path
+                .as_ref()
+                .parent()
+                .expect("proto file should reside in a directory")
+        })
+        .collect::<std::collections::HashSet<_>>();
+    self::configure().compile(proto_paths, &proto_dirs.into_iter().collect::<Vec<_>>())?;
 
     Ok(())
 }

@@ -6,7 +6,7 @@ members = [
   "tonic-clap-macros",
   "tonic-clap-build",
   "tonic-clap"
-]
+, "tonic-clap-tests/ctr"]
 package.edition = "2024"
 package.authors = [ "youyuanwu@outlook.com" ]
 package.documentation = "https://docs.rs/tonic-clap-build/latest/tonic_clap_build/"

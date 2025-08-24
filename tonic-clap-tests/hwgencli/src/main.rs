@@ -10,18 +10,7 @@ pub mod google {
 use clap::Parser;
 
 /// Simple program to greet a person
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Args {
-    #[arg(short, long)]
-    url: Option<String>,
-
-    #[arg(short, long)]
-    json_data: Option<String>,
-
-    #[command(subcommand)]
-    command: helloworld::cli::CommandServices,
-}
+pub type Args = tonic_clap::arg::DefaultArgs<helloworld::cli::CommandServices>;
 
 async fn connect(url: String) -> tonic::transport::Channel {
     let ep = tonic::transport::Endpoint::from_shared(url).unwrap();

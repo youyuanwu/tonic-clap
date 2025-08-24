@@ -5,6 +5,7 @@ use bevy_reflect::TypeInfo;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum TCFieldType {
     String,
+    U8,
     I32,
     I64,
     F32,
@@ -36,6 +37,7 @@ fn parse_type_path(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
         "f32" => TCFieldType::F32,
         "f64" => TCFieldType::F64,
         "bool" => TCFieldType::Bool,
+        "u8" => TCFieldType::U8,
         _ if type_path.starts_with("Vec<") && type_path.ends_with(">") => {
             let inner = &type_path[4..type_path.len() - 1];
             let list_info = if let bevy_reflect::TypeInfo::List(list_info) = type_info {
@@ -87,6 +89,13 @@ fn parse_type_path(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
             TCFieldType::Option(Box::new(inner_type))
         }
         _ => {
+            // map is not supported yet
+            if matches!(
+                type_info,
+                bevy_reflect::TypeInfo::Map(_) | bevy_reflect::TypeInfo::Opaque(_)
+            ) {
+                return TCFieldType::Unknown(type_info.type_path().to_string());
+            }
             // assume it is a struct.
             parse_struct(type_info, prefix)
         }
@@ -111,7 +120,7 @@ fn parse_struct(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
     let struct_info = if let TypeInfo::Struct(info) = type_info {
         info
     } else {
-        panic!("expect a struct {:?}", type_info);
+        panic!("expect a struct at {prefix:?} : {type_info:?}");
     };
 
     let prefix_outer = prefix.clone();
@@ -159,8 +168,11 @@ impl TCFieldType {
             TCFieldType::Option(inner) => {
                 inner.visit_nested(f);
             }
+            TCFieldType::Unknown(_) => {
+                // skip well known unknown types.
+            }
             _ => {
-                panic!("cannot visit non struct")
+                panic!("cannot visit on unsupported type: {self:?}")
             }
         }
     }
@@ -173,6 +185,7 @@ impl TCFieldType {
                 | TCFieldType::F32
                 | TCFieldType::F64
                 | TCFieldType::Bool
+                | TCFieldType::U8
                 | TCFieldType::String
                 | TCFieldType::Vec(_)
         )
@@ -181,6 +194,7 @@ impl TCFieldType {
     pub fn get_clap_value_parse(&self) -> (clap::builder::ValueParser, clap::ArgAction) {
         assert!(self.is_primitive());
         match &self {
+            TCFieldType::U8 => (clap::value_parser!(u8).into(), clap::ArgAction::Set),
             TCFieldType::I32 => (clap::value_parser!(i32).into(), clap::ArgAction::Set),
             TCFieldType::I64 => (clap::value_parser!(i64).into(), clap::ArgAction::Set),
             TCFieldType::F32 => (clap::value_parser!(f32).into(), clap::ArgAction::Set),
@@ -203,12 +217,16 @@ impl TCFieldType {
             TCFieldType::F64 => "f64",
             TCFieldType::Bool => "bool",
             TCFieldType::String => "String",
+            TCFieldType::U8 => "u8",
             TCFieldType::Vec(inner) => {
-                assert!(inner.is_primitive());
+                assert!(
+                    inner.is_primitive(),
+                    "Vec elements must be primitive: {inner:?} :{self:?}"
+                );
                 let s = "Vec<".to_string() + inner.display_primitive_type() + ">";
                 Box::leak(s.into_boxed_str())
             }
-            _ => panic!("not a primitive type"),
+            _ => panic!("not a primitive type: {self:?}"),
         }
     }
 }

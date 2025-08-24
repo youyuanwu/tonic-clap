@@ -217,3 +217,11 @@ async fn server_test() {
     token.cancel();
     svh.await.expect("task panic");
 }
+
+// ensures the ctr can show hwlp message
+#[tokio::test]
+async fn containerd_cli_compile_test() {
+    let addr = "127.0.0.1:50051".parse().unwrap();
+    let more_args = &["--help"];
+    run_client(addr, more_args, "ctr").await
+}
