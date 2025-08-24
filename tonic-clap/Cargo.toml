@@ -17,7 +17,7 @@ bevy_reflect.workspace = true
 serde_json.workspace = true
 serde.workspace = true
 clap.workspace = true
-tonic-clap-macros = { path = "../tonic-clap-macros" }
+tonic-clap-macros.workspace = true
 
 [dev-dependencies]
 prost.workspace = true

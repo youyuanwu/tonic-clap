@@ -35,6 +35,6 @@ heck = "0.5"
 bevy_reflect = { version = "0.16", default-features = false, features = ["std"] }
 
 # crate in this workspace
-tonic-clap-build = { path = "tonic-clap-build" }
-tonic-clap-macros = { path = "tonic-clap-macros" }
-tonic-clap = { path = "tonic-clap" }
+tonic-clap-build = { version = "0.2.0", path = "tonic-clap-build" }
+tonic-clap-macros = { version = "0.2.0", path = "tonic-clap-macros" }
+tonic-clap = { version = "0.2.0", path = "tonic-clap" }
