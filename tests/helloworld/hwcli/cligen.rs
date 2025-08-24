@@ -35,11 +35,11 @@ impl GreeterCommands {
                     None => Default::default(),
                 };
                 args.apply(&mut request);
-                Ok(Box::new(c.say_hello(request).await?))
+                Ok(Box::new(c.say_hello(request).await?.into_inner()))
             }
             GreeterCommands::SayHello2(args) => {
                 let request = tonic::Request::new((*args).clone().into());
-                Ok(Box::new(c.say_hello2(request).await?))
+                Ok(Box::new(c.say_hello2(request).await?.into_inner()))
             }
         }
     }
@@ -55,11 +55,11 @@ impl Greeter2Commands {
             Greeter2Commands::SayHello(args) => {
                 let mut request = HelloRequest::default();
                 args.apply(&mut request);
-                Ok(Box::new(c.say_hello(request).await?))
+                Ok(Box::new(c.say_hello(request).await?.into_inner()))
             }
             Greeter2Commands::SayHello2(args) => {
                 let request = tonic::Request::new((*args).clone().into());
-                Ok(Box::new(c.say_hello2(request).await?))
+                Ok(Box::new(c.say_hello2(request).await?.into_inner()))
             }
         }
     }

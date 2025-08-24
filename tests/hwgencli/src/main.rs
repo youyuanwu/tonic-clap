@@ -41,5 +41,5 @@ async fn main() {
         .execute(ch, args.json_data)
         .await
         .expect("request failed");
-    println!("RESPONSE={:?}", resp);
+    println!("{:?}", resp);
 }

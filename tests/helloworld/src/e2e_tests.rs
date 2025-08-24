@@ -204,9 +204,12 @@ async fn server_test() {
             "g2s2",
             "--field1.fname",
             "fname",
-            // "--field1.fcount", "3",
-            // "--field2", "f2",
-            // "--field3", "1"
+            "--field1.fcount",
+            "3",
+            "--field2",
+            "f2",
+            "--field3",
+            "1",
         ],
     )
     .await;

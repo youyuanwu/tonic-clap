@@ -431,14 +431,14 @@ pub mod cli {
                         Some(data) => serde_json::from_str(&data).unwrap(),
                         None => val,
                     };
-                    Ok(Box::new(c.say_hello(request).await?))
+                    Ok(Box::new(c.say_hello(request).await?.into_inner()))
                 }
                 GreeterCommands::SayHello2(val) => {
                     let request: super::HelloRequest2 = match json_data {
                         Some(data) => serde_json::from_str(&data).unwrap(),
                         None => val,
                     };
-                    Ok(Box::new(c.say_hello2(request).await?))
+                    Ok(Box::new(c.say_hello2(request).await?.into_inner()))
                 }
             }
         }
@@ -462,21 +462,21 @@ pub mod cli {
                         Some(data) => serde_json::from_str(&data).unwrap(),
                         None => val,
                     };
-                    Ok(Box::new(c.say_hello(request).await?))
+                    Ok(Box::new(c.say_hello(request).await?.into_inner()))
                 }
                 Greeter2Commands::SayHello2(val) => {
                     let request: super::HelloRequest2 = match json_data {
                         Some(data) => serde_json::from_str(&data).unwrap(),
                         None => val,
                     };
-                    Ok(Box::new(c.say_hello2(request).await?))
+                    Ok(Box::new(c.say_hello2(request).await?.into_inner()))
                 }
                 Greeter2Commands::SayHello3(val) => {
                     let request: super::super::google::protobuf::Empty = match json_data {
                         Some(data) => serde_json::from_str(&data).unwrap(),
                         None => val,
                     };
-                    Ok(Box::new(c.say_hello3(request).await?))
+                    Ok(Box::new(c.say_hello3(request).await?.into_inner()))
                 }
             }
         }

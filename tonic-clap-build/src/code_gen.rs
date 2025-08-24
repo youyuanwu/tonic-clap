@@ -122,7 +122,7 @@ impl CodeGenBuilder {
                         Some(data) => serde_json::from_str(&data).unwrap(),
                         None => val,
                     };
-                    Ok(Box::new(c.#method_name(request).await?))
+                    Ok(Box::new(c.#method_name(request).await?.into_inner()))
                 }
             };
             method_call_stream.extend(method_call);

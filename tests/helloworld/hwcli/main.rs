@@ -24,9 +24,6 @@ async fn connect(url: String) -> tonic::transport::Channel {
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
     let args = Args::parse();
-
-    // println!("Debug : {:?}", args);
-
     let ch = connect(args.url.unwrap()).await;
 
     let resp = args
@@ -34,5 +31,5 @@ async fn main() {
         .execute(ch, args.json_data)
         .await
         .expect("request failed");
-    println!("RESPONSE={:?}", resp);
+    println!("{:?}", resp);
 }
