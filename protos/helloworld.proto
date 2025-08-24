@@ -49,8 +49,8 @@ message HelloRequest2 {
 }
 
 enum EnumOk {
-  Ok1 = 0;
-  Ok2 = 1;
+  Ok0 = 0;
+  Ok1 = 1;
 }
 
 message Field1{

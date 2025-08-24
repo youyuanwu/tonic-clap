@@ -3,9 +3,9 @@ resolver = "2"
 members = [ 
   "tests/helloworld", 
   "tests/hwgencli",
-  "tonic-clap",
+  "tonic-clap-macros",
   "tonic-clap-build"
-]
+, "tonic-clap"]
 
 [workspace.dependencies]
 prost-build = "0.14"
@@ -25,7 +25,9 @@ syn = "2"
 serde = { version = "1", features = ["serde_derive"] }
 serde_json = "1"
 heck = "0.5"
+bevy_reflect = { version = "0.16", default-features = false, features = ["std"] }
 
 # crate in this workspace
 tonic-clap-build = { path = "tonic-clap-build" }
-tonic-clap = {path = "tonic-clap"}
+tonic-clap-macros = { path = "tonic-clap-macros" }
+tonic-clap = { path = "tonic-clap" }

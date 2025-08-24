@@ -12,6 +12,8 @@ clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
+tonic-clap.workspace = true
+bevy_reflect.workspace = true
 
 [build-dependencies]
 tonic-clap-build.workspace = true

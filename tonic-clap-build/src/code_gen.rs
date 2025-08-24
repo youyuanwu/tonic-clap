@@ -74,7 +74,7 @@ impl CodeGenBuilder {
         let exe_fn = quote! {
             impl CommandServices {
                 pub async fn execute(
-                    &self,
+                    self,
                     ch: tonic::transport::Channel,
                     json_data: Option<String>,
                 ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {
@@ -103,22 +103,24 @@ impl CodeGenBuilder {
         let mut method_call_stream = TokenStream::new();
         for m in &svc.methods {
             let method_enum_val = quote::format_ident!("{}", m.name.to_upper_camel_case());
-            let enum_tokens = quote! {
-                #method_enum_val,
-            };
-            method_enum_stream.extend(enum_tokens);
-
             // type in the same pkg
             // it is in the outer mod.
             let input_type: syn::Path =
                 syn::parse_str(&format!("super::{}", m.input_type)).unwrap();
-
             let method_name = quote::format_ident!("{}", m.name);
+
+            let enum_tokens = quote! {
+                #method_enum_val(#input_type),
+            };
+            method_enum_stream.extend(enum_tokens);
+
+            // For now if json data is present ignore args.
+            // TODO: implement merging of json data with args.
             let method_call = quote! {
-                #svc_enum_name::#method_enum_val => {
+                #svc_enum_name::#method_enum_val(val) => {
                     let request: #input_type = match json_data {
                         Some(data) => serde_json::from_str(&data).unwrap(),
-                        None => Default::default(),
+                        None => val,
                     };
                     Ok(Box::new(c.#method_name(request).await?))
                 }
@@ -132,7 +134,7 @@ impl CodeGenBuilder {
         let exe_fn = quote! {
             impl #svc_enum_name {
                 async fn execute(
-                    &self,
+                    self,
                     ch: tonic::transport::Channel,
                     json_data: Option<String>,
                 ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {

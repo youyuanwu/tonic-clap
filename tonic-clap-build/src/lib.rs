@@ -37,9 +37,11 @@ impl Builder {
         let g2 = self.service_generator();
         let g = MultiGen::new(g1, g2);
         self.cfg.service_generator(Box::new(g));
-        // add clap attr
-        self.cfg
-            .type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");
+
+        // default only works for message structs.
+        self.cfg.message_attribute(".", "#[serde(default)]");
+        self.cfg.type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize, tonic_clap::TonicClap, bevy_reflect::Reflect)]");
+
         self.cfg.disable_comments(["."]);
         // self.cfg
         //     .field_attribute(".", "#[arg(long, default_value = \"\")]");
