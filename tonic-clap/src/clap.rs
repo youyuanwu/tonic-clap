@@ -10,13 +10,13 @@ where
 
     let mut root_json = serde_json::Map::new();
 
-    tree.visit_nested(&mut |prefix, field_name, field_type| {
+    tree.visit_nested(&mut |ctx| {
         // Use the prefix, field_name, and field_type to extract values from matches
-        assert!(field_type.is_primitive());
-        let arg_name = if prefix.is_empty() {
-            field_name.clone()
+        assert!(ctx.field_type.is_primitive());
+        let arg_name = if ctx.prefix.is_empty() {
+            ctx.field_name.clone()
         } else {
-            prefix.join(".") + "." + field_name
+            ctx.prefix.join(".") + "." + ctx.field_name
         };
 
         // Check if argument exists first
@@ -25,10 +25,12 @@ where
         }
 
         // Extract the primitive value
-        if let Some(field_value) = extract_primitive_value(matches, &arg_name, field_type) {
+        if let Some(field_value) =
+            extract_primitive_value(matches, &arg_name, ctx.field_type.as_primitive())
+        {
             // Set the value at the correct nested path
-            let mut path_parts = prefix.to_vec();
-            path_parts.push(field_name.to_string());
+            let mut path_parts = ctx.prefix.to_vec();
+            path_parts.push(ctx.field_name.to_string());
             set_nested_value(&mut root_json, &path_parts, field_value);
         }
     });
@@ -50,47 +52,47 @@ where
 fn extract_primitive_value(
     matches: &clap::ArgMatches,
     arg_name: &str,
-    field_type: &crate::visit::TCFieldType,
+    field_type: &crate::visit::TCFieldTypePrimitive,
 ) -> Option<Value> {
-    use crate::visit::TCFieldType;
+    use crate::visit::TCFieldTypePrimitive;
 
     match field_type {
-        TCFieldType::String => {
+        TCFieldTypePrimitive::String => {
             if let Ok(Some(value)) = matches.try_get_one::<String>(arg_name) {
                 Some(Value::String(value.clone()))
             } else {
                 None
             }
         }
-        TCFieldType::I32 => {
+        TCFieldTypePrimitive::I32 => {
             if let Ok(Some(value)) = matches.try_get_one::<i32>(arg_name) {
                 Some(Value::Number(serde_json::Number::from(*value)))
             } else {
                 None
             }
         }
-        TCFieldType::I64 => {
+        TCFieldTypePrimitive::I64 => {
             if let Ok(Some(value)) = matches.try_get_one::<i64>(arg_name) {
                 Some(Value::Number(serde_json::Number::from(*value)))
             } else {
                 None
             }
         }
-        TCFieldType::F32 => {
+        TCFieldTypePrimitive::F32 => {
             if let Ok(Some(value)) = matches.try_get_one::<f32>(arg_name) {
                 serde_json::Number::from_f64(*value as f64).map(Value::Number)
             } else {
                 None
             }
         }
-        TCFieldType::F64 => {
+        TCFieldTypePrimitive::F64 => {
             if let Ok(Some(value)) = matches.try_get_one::<f64>(arg_name) {
                 serde_json::Number::from_f64(*value).map(Value::Number)
             } else {
                 None
             }
         }
-        TCFieldType::Bool => {
+        TCFieldTypePrimitive::Bool => {
             if let Ok(Some(value)) = matches.try_get_one::<bool>(arg_name) {
                 Some(Value::Bool(*value))
             } else if matches.get_flag(arg_name) {
@@ -99,14 +101,20 @@ fn extract_primitive_value(
                 None
             }
         }
-        TCFieldType::Vec(_) => {
-            // Handle vectors - for now assume Vec<String>
-            if let Ok(Some(values)) = matches.try_get_many::<String>(arg_name) {
-                let vec_values: Vec<String> = values.cloned().collect();
-                let json_array: Vec<Value> = vec_values.into_iter().map(Value::String).collect();
-                Some(Value::Array(json_array))
-            } else {
+        TCFieldTypePrimitive::Vec(inner) => {
+            if !inner.is_primitive() || (inner.is_primitive() && inner.as_primitive().is_vec()) {
+                // skip nested vec.
                 None
+            } else {
+                // Handle vectors - for now assume Vec<String>
+                if let Ok(Some(values)) = matches.try_get_many::<String>(arg_name) {
+                    let vec_values: Vec<String> = values.cloned().collect();
+                    let json_array: Vec<Value> =
+                        vec_values.into_iter().map(Value::String).collect();
+                    Some(Value::Array(json_array))
+                } else {
+                    None
+                }
             }
         }
         _ => {
@@ -156,24 +164,26 @@ fn set_nested_value(root: &mut serde_json::Map<String, Value>, path: &[String], 
 pub fn impl_augment_args(mut cmd: clap::Command, type_info: &TypeInfo) -> clap::Command {
     let tree = crate::visit::TCFieldType::parse(type_info);
     let mut args = Vec::new();
-    tree.visit_nested(&mut |prefix, field_name, field_type| {
-        assert!(field_type.is_primitive());
-        let arg_name = if prefix.is_empty() {
-            field_name.clone()
+    tree.visit_nested(&mut |ctx| {
+        assert!(ctx.field_type.is_primitive());
+        let arg_name = if ctx.prefix.is_empty() {
+            ctx.field_name.clone()
         } else {
-            prefix.join(".") + "." + field_name
+            ctx.prefix.join(".") + "." + ctx.field_name
         };
-        // Statics needed to bypass lifetime checks.
-        let help_text = format!("Arg: {}", field_type.display_primitive_type());
-        let value_name_static: &'static str = Box::leak(field_name.to_uppercase().into_boxed_str());
-        let arg_name_static: &'static str = Box::leak(arg_name.clone().into_boxed_str());
-        let help_text_static: &'static str = Box::leak(help_text.clone().into_boxed_str());
-        let (value_parser, action) = field_type.get_clap_value_parse();
-        let arg = clap::Arg::new(arg_name_static)
-            .long(arg_name_static)
-            .value_name(value_name_static)
-            .help(help_text_static)
-            .required(false)
+        let primitive_type = ctx.field_type.as_primitive();
+        if primitive_type.is_vec() && !primitive_type.is_primitive_vec() {
+            // We only support primitive vec for now.
+            return;
+        }
+        let help_text = format!("Arg: {}", primitive_type.display_primitive_type());
+
+        let (value_parser, action) = primitive_type.get_clap_value_parse();
+        let arg = clap::Arg::new(&arg_name)
+            .long(&arg_name)
+            .value_name(ctx.field_name.to_uppercase())
+            .help(&help_text)
+            .required(false) // TODO: support required properly. Currently many protos does not indicate if field is required.
             .action(action)
             .value_parser(value_parser.clone());
         args.push(arg);

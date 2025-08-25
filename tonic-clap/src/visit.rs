@@ -4,6 +4,22 @@ use bevy_reflect::TypeInfo;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum TCFieldType {
+    Primitive {
+        field_type: TCFieldTypePrimitive,
+        required: bool,
+    },
+    Option(Box<TCFieldType>),
+    Struct {
+        // prefix: Vec<String>,
+        name: String,
+        fields: Vec<TCStructField>,
+    },
+    Unknown(String),
+}
+
+// TODO: this may not be exhaustive.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum TCFieldTypePrimitive {
     String,
     U8,
     I32,
@@ -12,13 +28,6 @@ pub(crate) enum TCFieldType {
     F64,
     Bool,
     Vec(Box<TCFieldType>),
-    Option(Box<TCFieldType>),
-    Struct {
-        // prefix: Vec<String>,
-        name: String,
-        fields: Vec<TCStructField>,
-    },
-    Unknown(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -30,14 +39,36 @@ pub(crate) struct TCStructField {
 
 fn parse_type_path(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
     let type_path = strip_namespace(type_info.type_path());
+    // set all to required and reset it in outter optional case.
     match type_path {
-        "String" => TCFieldType::String,
-        "i32" => TCFieldType::I32,
-        "i64" => TCFieldType::I64,
-        "f32" => TCFieldType::F32,
-        "f64" => TCFieldType::F64,
-        "bool" => TCFieldType::Bool,
-        "u8" => TCFieldType::U8,
+        "String" => TCFieldType::Primitive {
+            field_type: TCFieldTypePrimitive::String,
+            required: true,
+        },
+        "i32" => TCFieldType::Primitive {
+            field_type: TCFieldTypePrimitive::I32,
+            required: true,
+        },
+        "i64" => TCFieldType::Primitive {
+            field_type: TCFieldTypePrimitive::I64,
+            required: true,
+        },
+        "f32" => TCFieldType::Primitive {
+            field_type: TCFieldTypePrimitive::F32,
+            required: true,
+        },
+        "f64" => TCFieldType::Primitive {
+            field_type: TCFieldTypePrimitive::F64,
+            required: true,
+        },
+        "bool" => TCFieldType::Primitive {
+            field_type: TCFieldTypePrimitive::Bool,
+            required: true,
+        },
+        "u8" => TCFieldType::Primitive {
+            field_type: TCFieldTypePrimitive::U8,
+            required: true,
+        },
         _ if type_path.starts_with("Vec<") && type_path.ends_with(">") => {
             let inner = &type_path[4..type_path.len() - 1];
             let list_info = if let bevy_reflect::TypeInfo::List(list_info) = type_info {
@@ -54,7 +85,11 @@ fn parse_type_path(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
                 strip_namespace(inner_type_info.type_path())
             );
             let inner_type = parse_type_path(inner_type_info, prefix.clone());
-            TCFieldType::Vec(Box::new(inner_type))
+            // Vec is currently always optional.
+            TCFieldType::Primitive {
+                field_type: TCFieldTypePrimitive::Vec(Box::new(inner_type)),
+                required: false,
+            }
         }
         _ if type_path.starts_with("Option<") && type_path.ends_with(">") => {
             let inner = &type_path[7..type_path.len() - 1];
@@ -85,7 +120,15 @@ fn parse_type_path(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
                 strip_namespace(inner),
                 strip_namespace(inner_type_info.type_path())
             );
-            let inner_type = parse_type_path(inner_type_info, prefix.clone());
+            let mut inner_type = parse_type_path(inner_type_info, prefix.clone());
+            // Set the current inner type as optional only when it is not nested.
+            // TODO: detect nested required.
+            if inner_type.is_primitive()
+                && prefix.is_empty()
+                && let TCFieldType::Primitive { required, .. } = &mut inner_type
+            {
+                *required = false;
+            }
             TCFieldType::Option(Box::new(inner_type))
         }
         _ => {
@@ -147,6 +190,59 @@ fn parse_struct(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
     }
 }
 
+pub(crate) struct CallbackArgs<'a> {
+    pub prefix: &'a Vec<String>,
+    pub field_name: &'a String,
+    pub field_type: &'a TCFieldType,
+    pub required: bool,
+}
+
+impl TCFieldTypePrimitive {
+    pub fn get_clap_value_parse(&self) -> (clap::builder::ValueParser, clap::ArgAction) {
+        match &self {
+            Self::U8 => (clap::value_parser!(u8).into(), clap::ArgAction::Set),
+            Self::I32 => (clap::value_parser!(i32).into(), clap::ArgAction::Set),
+            Self::I64 => (clap::value_parser!(i64).into(), clap::ArgAction::Set),
+            Self::F32 => (clap::value_parser!(f32).into(), clap::ArgAction::Set),
+            Self::F64 => (clap::value_parser!(f64).into(), clap::ArgAction::Set),
+            Self::Bool => (clap::value_parser!(bool), clap::ArgAction::Set),
+            Self::String => (clap::value_parser!(String), clap::ArgAction::Set),
+            Self::Vec(inner) => (
+                inner.as_primitive().get_clap_value_parse().0,
+                clap::ArgAction::Append,
+            ),
+        }
+    }
+
+    pub fn display_primitive_type(&self) -> String {
+        match &self {
+            Self::I32 => "i32".into(),
+            Self::I64 => "i64".into(),
+            Self::F32 => "f32".into(),
+            Self::F64 => "f64".into(),
+            Self::Bool => "bool".into(),
+            Self::String => "String".into(),
+            Self::U8 => "u8".into(),
+            Self::Vec(inner) => {
+                assert!(
+                    inner.is_primitive(),
+                    "Vec elements must be primitive: {inner:?} :{self:?}"
+                );
+                "Vec<".to_string() + &inner.as_primitive().display_primitive_type() + ">"
+            }
+        }
+    }
+
+    pub fn is_vec(&self) -> bool {
+        matches!(&self, Self::Vec { .. })
+    }
+
+    /// Check if the type is a primitive vector. nested vector is not primitive
+    pub fn is_primitive_vec(&self) -> bool {
+        matches!(&self, Self::Vec(inner) if inner.is_primitive() && !inner.as_primitive().is_vec())
+    }
+}
+
 impl TCFieldType {
     pub fn parse(type_info: &TypeInfo) -> Self {
         parse_struct(type_info, vec![])
@@ -154,12 +250,18 @@ impl TCFieldType {
 
     /// Visit all nested fields
     /// Callback is only applied on primitive types.
-    pub fn visit_nested(&self, f: &mut dyn FnMut(&Vec<String>, &String, &TCFieldType)) {
+    pub fn visit_nested(&self, f: &mut dyn FnMut(&CallbackArgs)) {
         match &self {
             TCFieldType::Struct { fields, .. } => {
                 for field in fields {
                     if field.field_type.is_primitive() {
-                        f(&field.prefix, &field.field_name, &field.field_type);
+                        let is_required = field.field_type.is_primitive_required();
+                        f(&CallbackArgs {
+                            prefix: &field.prefix,
+                            field_name: &field.field_name,
+                            field_type: &field.field_type,
+                            required: is_required,
+                        });
                     } else {
                         field.field_type.visit_nested(f);
                     }
@@ -171,62 +273,31 @@ impl TCFieldType {
             TCFieldType::Unknown(_) => {
                 // skip well known unknown types.
             }
-            _ => {
-                panic!("cannot visit on unsupported type: {self:?}")
+            TCFieldType::Primitive { .. } => {
+                // Note that we do not process none primitive Vec elements.
+                // should not reach here.
+                panic!("primitive type should be handled in the parent struct. {self:?}");
             }
         }
     }
 
     pub fn is_primitive(&self) -> bool {
-        matches!(
-            &self,
-            TCFieldType::I32
-                | TCFieldType::I64
-                | TCFieldType::F32
-                | TCFieldType::F64
-                | TCFieldType::Bool
-                | TCFieldType::U8
-                | TCFieldType::String
-                | TCFieldType::Vec(_)
-        )
+        matches!(&self, TCFieldType::Primitive { .. })
     }
 
-    pub fn get_clap_value_parse(&self) -> (clap::builder::ValueParser, clap::ArgAction) {
-        assert!(self.is_primitive());
-        match &self {
-            TCFieldType::U8 => (clap::value_parser!(u8).into(), clap::ArgAction::Set),
-            TCFieldType::I32 => (clap::value_parser!(i32).into(), clap::ArgAction::Set),
-            TCFieldType::I64 => (clap::value_parser!(i64).into(), clap::ArgAction::Set),
-            TCFieldType::F32 => (clap::value_parser!(f32).into(), clap::ArgAction::Set),
-            TCFieldType::F64 => (clap::value_parser!(f64).into(), clap::ArgAction::Set),
-            TCFieldType::Bool => (clap::value_parser!(bool), clap::ArgAction::Set),
-            TCFieldType::String => (clap::value_parser!(String), clap::ArgAction::Set),
-            TCFieldType::Vec(inner) => {
-                assert!(inner.is_primitive());
-                (inner.get_clap_value_parse().0, clap::ArgAction::Append)
-            }
-            _ => panic!("not a primitive type"),
+    pub fn as_primitive(&self) -> &TCFieldTypePrimitive {
+        if let TCFieldType::Primitive { field_type, .. } = self {
+            field_type
+        } else {
+            panic!("not a primitive type: {self:?}");
         }
     }
 
-    pub fn display_primitive_type(&self) -> &str {
-        match &self {
-            TCFieldType::I32 => "i32",
-            TCFieldType::I64 => "i64",
-            TCFieldType::F32 => "f32",
-            TCFieldType::F64 => "f64",
-            TCFieldType::Bool => "bool",
-            TCFieldType::String => "String",
-            TCFieldType::U8 => "u8",
-            TCFieldType::Vec(inner) => {
-                assert!(
-                    inner.is_primitive(),
-                    "Vec elements must be primitive: {inner:?} :{self:?}"
-                );
-                let s = "Vec<".to_string() + inner.display_primitive_type() + ">";
-                Box::leak(s.into_boxed_str())
-            }
-            _ => panic!("not a primitive type: {self:?}"),
+    pub fn is_primitive_required(&self) -> bool {
+        if let TCFieldType::Primitive { required, .. } = self {
+            *required
+        } else {
+            panic!("not a primitive type: {self:?}");
         }
     }
 }
@@ -279,7 +350,10 @@ mod tests {
                 TCStructField {
                     prefix: vec![],
                     field_name: "field0".into(),
-                    field_type: TCFieldType::I32
+                    field_type: TCFieldType::Primitive {
+                        field_type: TCFieldTypePrimitive::I32,
+                        required: true
+                    }
                 }
             );
             assert_eq!(
@@ -287,7 +361,10 @@ mod tests {
                 TCStructField {
                     prefix: vec![],
                     field_name: "field1".into(),
-                    field_type: TCFieldType::String
+                    field_type: TCFieldType::Primitive {
+                        field_type: TCFieldTypePrimitive::String,
+                        required: true
+                    }
                 }
             );
             assert_eq!(
@@ -301,12 +378,23 @@ mod tests {
                             TCStructField {
                                 prefix: vec!["field2".to_string()],
                                 field_name: "field0".into(),
-                                field_type: TCFieldType::F64
+                                field_type: TCFieldType::Primitive {
+                                    field_type: TCFieldTypePrimitive::F64,
+                                    required: true
+                                }
                             },
                             TCStructField {
                                 prefix: vec!["field2".to_string()],
                                 field_name: "field1".into(),
-                                field_type: TCFieldType::Vec(Box::new(TCFieldType::String))
+                                field_type: TCFieldType::Primitive {
+                                    field_type: TCFieldTypePrimitive::Vec(Box::new(
+                                        TCFieldType::Primitive {
+                                            field_type: TCFieldTypePrimitive::String,
+                                            required: true
+                                        }
+                                    )),
+                                    required: false
+                                }
                             },
                             TCStructField {
                                 prefix: vec!["field2".to_string()],
@@ -316,7 +404,10 @@ mod tests {
                                     fields: vec![TCStructField {
                                         prefix: vec!["field2".to_string(), "field2".to_string()],
                                         field_name: "field0".into(),
-                                        field_type: TCFieldType::I32
+                                        field_type: TCFieldType::Primitive {
+                                            field_type: TCFieldTypePrimitive::I32,
+                                            required: true
+                                        }
                                     },]
                                 }
                             },
@@ -329,7 +420,10 @@ mod tests {
                 TCStructField {
                     prefix: vec![],
                     field_name: "field3".into(),
-                    field_type: TCFieldType::Option(Box::new(TCFieldType::I64))
+                    field_type: TCFieldType::Option(Box::new(TCFieldType::Primitive {
+                        field_type: TCFieldTypePrimitive::I64,
+                        required: true
+                    }))
                 }
             );
         } else {

@@ -42,6 +42,16 @@ impl Builder {
         self.cfg.message_attribute(".", "#[serde(default)]");
         self.cfg.type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize, tonic_clap::TonicClap, bevy_reflect::Reflect)]");
 
+        // disable recusive known types
+        // See bevy issue: https://github.com/bevyengine/bevy/issues/8965
+        for message in &[
+            "google.protobuf.FileDescriptorProto",
+            "google.protobuf.DescriptorProto",
+        ] {
+            self.cfg
+                .type_attribute(message, "#[reflect(no_field_bounds)]");
+        }
+
         self.cfg.disable_comments(["."]);
         // self.cfg
         //     .field_attribute(".", "#[arg(long, default_value = \"\")]");
