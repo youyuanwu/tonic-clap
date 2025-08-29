@@ -6,3 +6,6 @@ pub use tonic_clap_macros::TonicClap;
 pub mod visit;
 
 pub mod arg;
+
+/// Common boxed error.
+pub type Error = Box<dyn std::error::Error + Send + Sync + 'static>;

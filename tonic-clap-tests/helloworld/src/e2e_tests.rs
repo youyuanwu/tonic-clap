@@ -108,7 +108,7 @@ async fn run_client_gen(addr: SocketAddr, more_args: &[&str]) {
 async fn run_client(addr: SocketAddr, more_args: &[&str], bin: &str) {
     use std::process::Stdio;
     use tokio::process::Command;
-    let shared_args = ["run", "--quiet", "--bin", bin, "--", "--url"];
+    let shared_args = ["run", "--quiet", "--bin", bin, "--", "tcp", "--url"];
     let mut child = Command::new("cargo")
         .current_dir("../") // workspace dir.
         .args(shared_args)
