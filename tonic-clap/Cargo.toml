@@ -12,12 +12,19 @@ keywords.workspace = true
 readme = "../README.md"
 description = "gRPC tonic cli generator core implementation."
 
+[features]
+openssl = ["dep:openssl", "dep:tonic-tls"]
+
 [dependencies]
 bevy_reflect.workspace = true
 serde_json.workspace = true
 serde.workspace = true
 clap.workspace = true
 tonic-clap-macros.workspace = true
+openssl = { workspace = true, optional = true}
+tonic.workspace = true
+tonic-tls = { workspace = true, optional = true}
+tracing.workspace = true
 
 [dev-dependencies]
 prost.workspace = true

@@ -5,20 +5,21 @@ mod cligen;
 /// Simple program to greet a person
 pub type Args = tonic_clap::arg::DefaultArgs<cligen::CommandServices>;
 
-async fn connect(url: String) -> tonic::transport::Channel {
-    let ep = tonic::transport::Endpoint::from_shared(url).unwrap();
-    ep.connect().await.unwrap()
-}
-
 #[tokio::main(flavor = "current_thread")]
-async fn main() {
+async fn main() -> Result<(), tonic_clap::Error> {
     let args = Args::parse();
-    let ch = connect(args.url.unwrap()).await;
+    let ctx = args.transport.make_channel()?;
 
-    let resp = args
-        .command
-        .execute(ch, args.json_data)
+    if ctx.common.dry_run {
+        println!("dry run: {:?}", ctx.cmd);
+        return Ok(());
+    }
+
+    let resp = ctx
+        .cmd
+        .execute(ctx.channel, ctx.common.json_data)
         .await
         .expect("request failed");
     println!("{:?}", resp);
+    Ok(())
 }
