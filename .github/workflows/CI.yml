@@ -7,20 +7,24 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ windows-latest, ubuntu-latest ]
+        os: [ windows-2025, ubuntu-latest ]
     steps:
     - uses: actions/checkout@v5
 
-    # on windows we need to install openssl
-    - name: Get vcpkg
+    # winget list openssl --accept-source-agreements
+    # openssl might not be installed from winget.
+    - name: list openssl
       if: runner.os == 'Windows'
-      uses: lukka/run-vcpkg@v11
-      with:
-        vcpkgGitCommitId: dd3adcf020e69077e83e92a0a293ceca734f6288
+      run: |    
+        Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" | Where-Object { $_.DisplayName -like "*OpenSSL*" }
+      shell: pwsh
 
-    - name: vcpkg install
+    - name: Set openssl environment variables
       if: runner.os == 'Windows'
-      run: vcpkg install openssl:x64-windows-static-md
+      run: |
+        echo "OPENSSL_DIR=C:/Program Files/OpenSSL" >> $env:GITHUB_ENV
+        echo "OPENSSL_LIB_DIR=C:/Program Files/OpenSSL/lib/VC/x64/MDd" >> $env:GITHUB_ENV
+      shell: pwsh
 
     - name: Install rust stable
       uses: dtolnay/rust-toolchain@stable
