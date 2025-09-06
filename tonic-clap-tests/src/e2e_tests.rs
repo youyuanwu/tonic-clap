@@ -1,77 +1,8 @@
 use std::{net::SocketAddr, time::Duration};
 
 use tokio_util::sync::CancellationToken;
-use tonic::{Request, Response, Status};
 
-use crate::google::protobuf;
-
-use super::helloworld::*;
-
-struct Greeter {}
-
-#[tonic::async_trait]
-impl greeter_server::Greeter for Greeter {
-    async fn say_hello(
-        &self,
-        request: Request<HelloRequest>,
-    ) -> Result<Response<HelloReply>, Status> {
-        let reply = HelloReply {
-            message: format!("Hello {}!", request.into_inner().name),
-        };
-        Ok(Response::new(reply))
-    }
-    async fn say_hello2(
-        &self,
-        request: Request<HelloRequest2>,
-    ) -> Result<Response<HelloReply2>, Status> {
-        let reply = HelloReply2 {
-            message: format!("Hello2 {}!", request.into_inner().name),
-        };
-        Ok(Response::new(reply))
-    }
-}
-
-struct Greeter2 {}
-
-#[tonic::async_trait]
-impl greeter2_server::Greeter2 for Greeter2 {
-    async fn say_hello(
-        &self,
-        request: Request<HelloRequest>,
-    ) -> Result<Response<HelloReply>, Status> {
-        let reply = HelloReply {
-            message: format!("2Hello {}!", request.into_inner().name),
-        };
-        Ok(Response::new(reply))
-    }
-    async fn say_hello2(
-        &self,
-        request: Request<HelloRequest2>,
-    ) -> Result<Response<HelloReply2>, Status> {
-        let request = request.into_inner();
-        let res = format!(
-            "name:{},field1:{:?},field2:{:?},field3:{:?}",
-            request.name,
-            request.field1,
-            request.field2,
-            EnumOk::try_from(request.field3).unwrap()
-        );
-        let reply = HelloReply2 {
-            message: format!("2Hello2 {}!", res),
-        };
-        Ok(Response::new(reply))
-    }
-
-    async fn say_hello3(
-        &self,
-        _request: Request<protobuf::Empty>,
-    ) -> Result<Response<HelloReply>, Status> {
-        let reply = HelloReply {
-            message: "2Hello3 Empty!".to_string(),
-        };
-        Ok(Response::new(reply))
-    }
-}
+use crate::server::{Greeter2Impl, GreeterImpl};
 
 // creates a listener on a random port from os, and return the addr.
 pub async fn create_listener_server() -> (tokio::net::TcpListener, std::net::SocketAddr) {
@@ -82,11 +13,11 @@ pub async fn create_listener_server() -> (tokio::net::TcpListener, std::net::Soc
 }
 
 async fn run_server_block(listener: tokio::net::TcpListener, token: CancellationToken) {
-    let greeter = Greeter {};
-    let greeter2 = Greeter2 {};
+    let greeter = GreeterImpl::new_svc();
+    let greeter2 = Greeter2Impl::new_svc();
     tonic::transport::Server::builder()
-        .add_service(greeter_server::GreeterServer::new(greeter))
-        .add_service(greeter2_server::Greeter2Server::new(greeter2))
+        .add_service(greeter)
+        .add_service(greeter2)
         .serve_with_incoming_shutdown(
             tonic::transport::server::TcpIncoming::from(listener),
             async move { token.cancelled().await },
@@ -105,15 +36,28 @@ async fn run_client_gen(addr: SocketAddr, more_args: &[&str]) {
     run_client(addr, more_args, "hwgencli").await
 }
 
+const CARGO_ARGS: &[&str] = &["run", "--quiet", "--bin"];
+
 async fn run_client(addr: SocketAddr, more_args: &[&str], bin: &str) {
     use std::process::Stdio;
     use tokio::process::Command;
-    let shared_args = ["run", "--quiet", "--bin", bin, "--", "tcp", "--url"];
+    let url = &format!("http://{addr}");
+    let mut cargo_args = Vec::from(CARGO_ARGS);
+    cargo_args.extend_from_slice(&[bin, "--"]);
+    let mut app_args = Vec::from(&["tcp", "--url", url]);
+    app_args.extend_from_slice(more_args);
+
+    // Run this with the in process parsing first
+    if bin == "hwgencli" {
+        use clap::Parser;
+        let mut app_args2 = vec!["hwgencli"];
+        app_args2.extend_from_slice(&app_args);
+        crate::HWArgs::try_parse_from(app_args2).unwrap();
+    }
     let mut child = Command::new("cargo")
         .current_dir("../") // workspace dir.
-        .args(shared_args)
-        .arg(format!("http://{addr}"))
-        .args(more_args)
+        .args(&cargo_args)
+        .args(&app_args)
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .spawn()

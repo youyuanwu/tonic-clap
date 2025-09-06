@@ -1,16 +1,16 @@
 pub mod helloworld {
-    include!("../gen/helloworld.rs");
+    tonic::include_proto!("helloworld");
 }
 pub mod google {
     pub mod protobuf {
-        include!("../gen/google.protobuf.rs");
+        tonic::include_proto!("google.protobuf");
     }
 }
 
 use clap::Parser;
 
 /// Simple program to greet a person
-pub type Args = tonic_clap::arg::DefaultArgs<helloworld::cli::CommandServices>;
+pub type Args = tonic_clap_tests::HWArgs;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), tonic_clap::Error> {

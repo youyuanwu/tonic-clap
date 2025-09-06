@@ -52,10 +52,10 @@ jobs:
       run: cargo test --all -- --nocapture
 
     - name: Run llvm-cov
-      run: cargo llvm-cov --codecov --output-path codecov.json --ignore-filename-regex tonic-clap-tests.*
+      run: cargo llvm-cov --codecov --output-path codecov.json --include-build-script --ignore-filename-regex "tonic-clap-tests.*|apps.*"
 
     - name: Show cov summary
-      run: cargo llvm-cov report --summary-only --ignore-filename-regex tonic-clap-tests.*
+      run: cargo llvm-cov report --summary-only --include-build-script --ignore-filename-regex "tonic-clap-tests.*|apps.*"
 
     # - name: Upload Report to Codecov
     #   uses: codecov/codecov-action@v5

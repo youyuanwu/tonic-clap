@@ -699,6 +699,7 @@ dependencies = [
  "tonic",
  "tonic-clap",
  "tonic-clap-build",
+ "tonic-clap-tests",
  "tonic-prost",
 ]
 
@@ -1545,6 +1546,7 @@ dependencies = [
  "tonic-clap",
  "tonic-clap-build",
  "tonic-prost",
+ "tonic-prost-build",
 ]
 
 [[package]]

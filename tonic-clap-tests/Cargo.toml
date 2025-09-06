@@ -20,3 +20,4 @@ tonic-clap.workspace = true
 
 [build-dependencies]
 tonic-clap-build.workspace = true
+tonic-prost-build.workspace = true
