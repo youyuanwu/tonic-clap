@@ -1,4 +1,4 @@
-use helloworld::helloworld::{EnumOk, HelloRequest};
+use tonic_clap_tests::helloworld::{self, EnumOk, HelloRequest};
 
 #[derive(clap::Subcommand, Debug)]
 pub enum CommandServices {
@@ -27,7 +27,7 @@ impl GreeterCommands {
         ch: tonic::transport::Channel,
         json_data: Option<String>,
     ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {
-        let mut c = helloworld::helloworld::greeter_client::GreeterClient::new(ch);
+        let mut c = helloworld::greeter_client::GreeterClient::new(ch);
         match self {
             GreeterCommands::SayHello(args) => {
                 let mut request: HelloRequest = match json_data {
@@ -50,7 +50,7 @@ impl Greeter2Commands {
         &self,
         ch: tonic::transport::Channel,
     ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {
-        let mut c = helloworld::helloworld::greeter2_client::Greeter2Client::new(ch);
+        let mut c = helloworld::greeter2_client::Greeter2Client::new(ch);
         match self {
             Greeter2Commands::SayHello(args) => {
                 let mut request = HelloRequest::default();
@@ -110,7 +110,7 @@ pub struct Field1Arg {
     fcount: i32,
 }
 
-impl From<HelloRequest2Arg> for helloworld::helloworld::HelloRequest2 {
+impl From<HelloRequest2Arg> for helloworld::HelloRequest2 {
     fn from(value: HelloRequest2Arg) -> Self {
         Self {
             name: value.name,
@@ -122,7 +122,7 @@ impl From<HelloRequest2Arg> for helloworld::helloworld::HelloRequest2 {
     }
 }
 
-impl From<Field1Arg> for helloworld::helloworld::Field1 {
+impl From<Field1Arg> for helloworld::Field1 {
     fn from(value: Field1Arg) -> Self {
         Self {
             fname: value.fname,

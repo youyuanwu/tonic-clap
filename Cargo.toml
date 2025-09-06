@@ -1,12 +1,14 @@
 [workspace]
 resolver = "2"
 members = [ 
-  "tonic-clap-tests/helloworld", 
-  "tonic-clap-tests/hwgencli",
+  "apps/hwgencli",
+  "apps/hwcli",
+  "apps/ctr",
   "tonic-clap-macros",
   "tonic-clap-build",
-  "tonic-clap"
-, "tonic-clap-tests/ctr"]
+  "tonic-clap",
+  "tonic-clap-tests",
+]
 package.edition = "2024"
 package.authors = [ "youyuanwu@outlook.com" ]
 package.documentation = "https://docs.rs/tonic-clap-build/latest/tonic_clap_build/"
@@ -41,3 +43,4 @@ tonic-tls = { version = "0.6", features = ["openssl"] }
 tonic-clap-build = { version = "0.2.1", path = "tonic-clap-build" }
 tonic-clap-macros = { version = "0.2.1", path = "tonic-clap-macros" }
 tonic-clap = { version = "0.2.1", path = "tonic-clap" }
+tonic-clap-tests = { version = "0.1.0", path = "tonic-clap-tests" }
