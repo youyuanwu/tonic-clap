@@ -20,7 +20,9 @@ pub(crate) enum TCFieldType {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum TCFieldTypePrimitive {
     String,
-    U8,
+    U8, // Byte
+    U32,
+    U64,
     I32,
     I64,
     F32,
@@ -66,6 +68,10 @@ fn parse_type_path(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
         },
         "u8" => TCFieldType::Primitive {
             field_type: TCFieldTypePrimitive::U8,
+            required: true,
+        },
+        "u32" => TCFieldType::Primitive {
+            field_type: TCFieldTypePrimitive::U32,
             required: true,
         },
         _ if type_path.starts_with("Vec<") && type_path.ends_with(">") => {
@@ -132,11 +138,12 @@ fn parse_type_path(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
         }
         _ => {
             // map is not supported yet
-            if matches!(
-                type_info,
-                bevy_reflect::TypeInfo::Map(_) | bevy_reflect::TypeInfo::Opaque(_)
-            ) {
+            if matches!(type_info, bevy_reflect::TypeInfo::Map(_)) {
                 TCFieldType::Unknown(type_info.type_path().to_string())
+            } else if let bevy_reflect::TypeInfo::Opaque(_) = type_info {
+                panic!(
+                    "Opaque type is not supported: {type_info:?}, prefix: {prefix:?}. Primitive type needs to be added?"
+                );
             } else if let bevy_reflect::TypeInfo::Enum(enum_info) = type_info {
                 parse_enum_to_struct(enum_info, prefix)
             } else {
@@ -192,6 +199,7 @@ fn parse_struct(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
     }
 }
 
+/// This is to support proto OneOf. proto enum is primitive i32.
 /// For enums we follow serde json so that arg extraction works.
 /// It is a struct with field name as the variant name.
 /// The field type is the inner type of the variant.
@@ -244,6 +252,8 @@ impl TCFieldTypePrimitive {
             Self::I64 => (clap::value_parser!(i64).into(), clap::ArgAction::Set),
             Self::F32 => (clap::value_parser!(f32).into(), clap::ArgAction::Set),
             Self::F64 => (clap::value_parser!(f64).into(), clap::ArgAction::Set),
+            Self::U32 => (clap::value_parser!(u32).into(), clap::ArgAction::Set),
+            Self::U64 => (clap::value_parser!(u64).into(), clap::ArgAction::Set),
             Self::Bool => (clap::value_parser!(bool), clap::ArgAction::Set),
             Self::String => (clap::value_parser!(String), clap::ArgAction::Set),
             Self::Vec(inner) => (
@@ -262,6 +272,8 @@ impl TCFieldTypePrimitive {
             Self::Bool => "bool".into(),
             Self::String => "String".into(),
             Self::U8 => "u8".into(),
+            Self::U32 => "u32".into(),
+            Self::U64 => "u64".into(),
             Self::Vec(inner) => {
                 assert!(
                     inner.is_primitive(),
