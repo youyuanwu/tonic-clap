@@ -192,6 +192,9 @@ fn parse_struct(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
     }
 }
 
+/// For enums we follow serde json so that arg extraction works.
+/// It is a struct with field name as the variant name.
+/// The field type is the inner type of the variant.
 fn parse_enum_to_struct(enum_info: &EnumInfo, prefix: Vec<String>) -> TCFieldType {
     let fields = enum_info
         .variant_names()
