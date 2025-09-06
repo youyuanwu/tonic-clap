@@ -47,6 +47,20 @@ message HelloRequest2 {
   repeated string field2 = 3;
   EnumOk field3 = 4;
   optional string opt_string = 5;
+  oneof one_of_field {
+    OneOf1 one_of_1 = 6;
+    OneOf2 one_of_2 = 7;
+    // Internal one of field cannot be optional.
+    int32 one_of_int = 8;
+  }
+}
+
+message OneOf1{
+  string one_of_str = 1;
+}
+
+message OneOf2{
+  int32 one_of_int = 1;
 }
 
 enum EnumOk {

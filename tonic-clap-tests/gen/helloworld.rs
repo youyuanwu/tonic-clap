@@ -30,6 +30,50 @@ pub struct HelloRequest2 {
     pub field3: i32,
     #[prost(string, optional, tag = "5")]
     pub opt_string: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(oneof = "hello_request2::OneOfField", tags = "6, 7, 8")]
+    pub one_of_field: ::core::option::Option<hello_request2::OneOfField>,
+}
+/// Nested message and enum types in `HelloRequest2`.
+pub mod hello_request2 {
+    #[derive(
+        serde::Serialize,
+        serde::Deserialize,
+        tonic_clap::TonicClap,
+        bevy_reflect::Reflect
+    )]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
+    pub enum OneOfField {
+        #[prost(message, tag = "6")]
+        OneOf1(super::OneOf1),
+        #[prost(message, tag = "7")]
+        OneOf2(super::OneOf2),
+        #[prost(int32, tag = "8")]
+        OneOfInt(i32),
+    }
+}
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    tonic_clap::TonicClap,
+    bevy_reflect::Reflect
+)]
+#[serde(default)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct OneOf1 {
+    #[prost(string, tag = "1")]
+    pub one_of_str: ::prost::alloc::string::String,
+}
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    tonic_clap::TonicClap,
+    bevy_reflect::Reflect
+)]
+#[serde(default)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct OneOf2 {
+    #[prost(int32, tag = "1")]
+    pub one_of_int: i32,
 }
 #[derive(
     serde::Serialize,

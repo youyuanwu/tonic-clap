@@ -41,11 +41,22 @@ where
     // Use serde to deserialize directly into the target struct
     match serde_json::from_value::<T>(json_value) {
         Ok(instance) => Ok(instance),
-        Err(e) => Err(clap::Error::raw(
-            clap::error::ErrorKind::ValueValidation,
-            format!("Failed to deserialize struct from arguments: {}", e),
-        )),
+        Err(e) => Err(map_serde_error_to_clap(e)),
     }
+}
+
+fn map_serde_error_to_clap(e: serde_json::Error) -> clap::Error {
+    // If conflicting one of fields args are passed return ArgumentConflict error.
+    if e.is_data() && format!("{}", e).contains("expected map with a single key") {
+        return clap::Error::raw(
+            clap::error::ErrorKind::ArgumentConflict,
+            format!("Argument conflict for OneOf fields."),
+        );
+    }
+    clap::Error::raw(
+        clap::error::ErrorKind::ValueValidation,
+        format!("Failed to deserialize struct from arguments: {}", e),
+    )
 }
 
 // Helper function to extract primitive value from matches
@@ -193,3 +204,13 @@ pub fn impl_augment_args(mut cmd: clap::Command, type_info: &TypeInfo) -> clap::
     }
     cmd
 }
+
+// #[cfg(test)]
+// mod tests {
+//     #[test]
+//     fn json_error_test(){
+//         let mut root_json = serde_json::Map::new();
+//         root_json.insert("field1".to_string(), serde_json::Value::String("value1".to_string()));
+//         root_json.insert("field1".to_string(), serde_json::Value::String("value2".to_string()));
+//     }
+// }
