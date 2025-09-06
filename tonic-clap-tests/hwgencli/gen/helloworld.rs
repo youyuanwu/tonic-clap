@@ -28,6 +28,8 @@ pub struct HelloRequest2 {
     pub field2: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     #[prost(enumeration = "EnumOk", tag = "4")]
     pub field3: i32,
+    #[prost(string, optional, tag = "5")]
+    pub opt_string: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[derive(
     serde::Serialize,

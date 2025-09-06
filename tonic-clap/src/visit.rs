@@ -248,6 +248,10 @@ impl TCFieldType {
         parse_struct(type_info, vec![])
     }
 
+    pub fn is_primitive_option(&self) -> bool {
+        matches!(&self, TCFieldType::Option(inner) if inner.is_primitive())
+    }
+
     /// Visit all nested fields
     /// Callback is only applied on primitive types.
     pub fn visit_nested(&self, f: &mut dyn FnMut(&CallbackArgs)) {
@@ -262,12 +266,29 @@ impl TCFieldType {
                             field_type: &field.field_type,
                             required: is_required,
                         });
+                    } else if field.field_type.is_primitive_option() {
+                        // option primitive
+                        let inner = if let TCFieldType::Option(inner) = &field.field_type {
+                            inner
+                        } else {
+                            unreachable!();
+                        };
+                        f(&CallbackArgs {
+                            prefix: &field.prefix,
+                            field_name: &field.field_name,
+                            field_type: inner,
+                            required: false,
+                        });
                     } else {
                         field.field_type.visit_nested(f);
                     }
                 }
             }
             TCFieldType::Option(inner) => {
+                assert!(
+                    !inner.is_primitive(),
+                    "Option primitive should be handled in parent struct: {self:?}"
+                );
                 inner.visit_nested(f);
             }
             TCFieldType::Unknown(_) => {

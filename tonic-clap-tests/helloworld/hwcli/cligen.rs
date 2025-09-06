@@ -117,6 +117,7 @@ impl From<HelloRequest2Arg> for helloworld::helloworld::HelloRequest2 {
             field1: value.field1.map(|f| f.into()),
             field2: value.field2,
             field3: EnumOk::Ok1.into(),
+            opt_string: None,
         }
     }
 }
