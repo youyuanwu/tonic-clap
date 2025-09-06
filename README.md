@@ -47,7 +47,7 @@ struct Args {
 # Example
 See example:
 [proto](protos/helloworld.proto)
-[generated-cli-app](./tests/hwgencli/)
+[generated-cli-app](./apps/hwgencli/)
 
 See the clap help of the example app
 ```txt
