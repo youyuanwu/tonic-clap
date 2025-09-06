@@ -136,7 +136,7 @@ fn parse_type_path(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
                 type_info,
                 bevy_reflect::TypeInfo::Map(_) | bevy_reflect::TypeInfo::Opaque(_)
             ) {
-                return TCFieldType::Unknown(type_info.type_path().to_string());
+                TCFieldType::Unknown(type_info.type_path().to_string())
             } else if let bevy_reflect::TypeInfo::Enum(enum_info) = type_info {
                 parse_enum_to_struct(enum_info, prefix)
             } else {
@@ -195,7 +195,7 @@ fn parse_struct(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
 fn parse_enum_to_struct(enum_info: &EnumInfo, prefix: Vec<String>) -> TCFieldType {
     let fields = enum_info
         .variant_names()
-        .into_iter()
+        .iter()
         .map(|v_name| {
             // prost always use single tuple variant: Enum::VariantName(InnerType)
             let v = enum_info.variant(v_name).unwrap();
