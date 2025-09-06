@@ -41,11 +41,22 @@ where
     // Use serde to deserialize directly into the target struct
     match serde_json::from_value::<T>(json_value) {
         Ok(instance) => Ok(instance),
-        Err(e) => Err(clap::Error::raw(
-            clap::error::ErrorKind::ValueValidation,
-            format!("Failed to deserialize struct from arguments: {}", e),
-        )),
+        Err(e) => Err(map_serde_error_to_clap(e)),
     }
+}
+
+fn map_serde_error_to_clap(e: serde_json::Error) -> clap::Error {
+    // If conflicting one of fields args are passed return ArgumentConflict error.
+    if e.is_data() && e.to_string().contains("expected map with a single key") {
+        return clap::Error::raw(
+            clap::error::ErrorKind::ArgumentConflict,
+            "Argument conflict for OneOf fields.",
+        );
+    }
+    clap::Error::raw(
+        clap::error::ErrorKind::ValueValidation,
+        format!("Failed to deserialize struct from arguments: {}", e),
+    )
 }
 
 // Helper function to extract primitive value from matches

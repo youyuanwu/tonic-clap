@@ -118,6 +118,11 @@ impl From<HelloRequest2Arg> for helloworld::HelloRequest2 {
             field2: value.field2,
             field3: EnumOk::Ok1.into(),
             opt_string: None,
+            one_of_field: Some(helloworld::hello_request2::OneOfField::OneOf1(
+                helloworld::OneOf1 {
+                    one_of_str: "one_of_str_value".to_string(),
+                },
+            )),
         }
     }
 }

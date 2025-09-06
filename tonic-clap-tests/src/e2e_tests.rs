@@ -156,6 +156,8 @@ async fn server_test() {
             "1",
             "--opt_string",
             "optstring",
+            "--one_of_field.OneOfInt",
+            "123",
         ],
     )
     .await;

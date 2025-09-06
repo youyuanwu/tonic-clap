@@ -3,7 +3,7 @@
 use clap::{Args, Command, FromArgMatches};
 use tonic_clap::{impl_augment_args, impl_from_arg_matches};
 
-use crate::helloworld::{EnumOk, Field1, HelloRequest2};
+use crate::helloworld::{self, EnumOk, Field1, HelloRequest2};
 
 #[test]
 fn test_serde_based_struct_population() {
@@ -51,8 +51,6 @@ fn test_serde_based_struct_population() {
 
 #[test]
 fn test_reflection_based_parsing() {
-    println!("=== Testing Reflection-Based Parsing ===");
-
     // Test Field1 parsing
     let mut cmd = Field1::augment_args(Command::new("test"));
     let matches = cmd
@@ -63,7 +61,6 @@ fn test_reflection_based_parsing() {
     let field1 = Field1::from_arg_matches(&matches).unwrap();
     assert_eq!(field1.fname, "hello");
     assert_eq!(field1.fcount, 42);
-    println!("✓ Field1 parsing works with generic helper");
 
     // Test HelloRequest2 with nested Field1
     cmd = HelloRequest2::augment_args(Command::new("test"));
@@ -83,6 +80,8 @@ fn test_reflection_based_parsing() {
             "item2",
             "--field3",
             "0",
+            "--one_of_field.OneOf1.one_of_str",
+            "one_of_str_value",
         ])
         .unwrap();
 
@@ -94,9 +93,82 @@ fn test_reflection_based_parsing() {
     assert_eq!(nested_field1.fcount, 123);
     assert_eq!(hello_req.field2, vec!["item1", "item2"]);
     assert_eq!(hello_req.field3, EnumOk::Ok0 as i32);
-    println!("✓ HelloRequest2 with nested Field1 parsing works with generic helper");
+    assert_eq!(
+        hello_req.one_of_field,
+        Some(helloworld::hello_request2::OneOfField::OneOf1(
+            helloworld::OneOf1 {
+                one_of_str: "one_of_str_value".to_string(),
+            }
+        ))
+    );
+}
 
-    println!("✓ All tests passed - recursive parsing with generic helper works!");
+#[test]
+fn test_internal_one_of_field() {
+    // Test HelloRequest2 with oneof field
+    let cmd = HelloRequest2::augment_args(Command::new("test"));
+    {
+        let matches = cmd
+            .clone()
+            .try_get_matches_from(vec![
+                "test",
+                "--one_of_field.OneOf1.one_of_str",
+                "one_of_str_value",
+            ])
+            .unwrap();
+
+        let hello_req = HelloRequest2::from_arg_matches(&matches).unwrap();
+        assert_eq!(
+            hello_req.one_of_field,
+            Some(helloworld::hello_request2::OneOfField::OneOf1(
+                helloworld::OneOf1 {
+                    one_of_str: "one_of_str_value".to_string(),
+                }
+            ))
+        );
+    }
+    {
+        let matches = cmd
+            .clone()
+            .try_get_matches_from(vec!["test", "--one_of_field.OneOfInt", "123"])
+            .unwrap();
+
+        let hello_req = HelloRequest2::from_arg_matches(&matches).unwrap();
+        assert_eq!(
+            hello_req.one_of_field,
+            Some(helloworld::hello_request2::OneOfField::OneOfInt(123))
+        );
+    }
+    {
+        let matches = cmd
+            .clone()
+            .try_get_matches_from(vec!["test", "--one_of_field.OneOf2.one_of_int", "234"])
+            .unwrap();
+
+        let hello_req = HelloRequest2::from_arg_matches(&matches).unwrap();
+        assert_eq!(
+            hello_req.one_of_field,
+            Some(helloworld::hello_request2::OneOfField::OneOf2(
+                helloworld::OneOf2 { one_of_int: 234 }
+            ))
+        );
+    }
+    // test conflicts
+    {
+        let matches = cmd
+            .clone()
+            .try_get_matches_from(vec![
+                "test",
+                "--one_of_field.OneOf2.one_of_int",
+                "234",
+                "--one_of_field.OneOfInt",
+                "123",
+            ])
+            .unwrap();
+
+        let e = HelloRequest2::from_arg_matches(&matches).unwrap_err();
+        assert_eq!(e.kind(), clap::error::ErrorKind::ArgumentConflict);
+    }
 }
 
 #[test]
@@ -198,4 +270,28 @@ fn test_multi_level_nesting() {
     assert_eq!(level3.value, 99);
 
     println!("✅ JSON structure properly represents multi-level nesting!");
+}
+
+#[test]
+fn test_enum_json() {
+    let h2 = HelloRequest2 {
+        name: "test".to_string(),
+        field1: None,
+        field2: vec![],
+        field3: EnumOk::Ok1 as i32,
+        opt_string: None,
+        one_of_field: Some(helloworld::hello_request2::OneOfField::OneOf1(
+            helloworld::OneOf1 {
+                one_of_str: "one_of_str_value".to_string(),
+            },
+        )),
+    };
+    // Json of the one of has the type name in the key.
+    // So for the args generation enums should be treated as structs,
+    // where field is the type name of variant.
+    let json = serde_json::to_value(&h2).unwrap();
+    assert_eq!(
+        json["one_of_field"]["OneOf1"]["one_of_str"],
+        "one_of_str_value"
+    );
 }

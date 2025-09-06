@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use bevy_reflect::TypeInfo;
+use bevy_reflect::{EnumInfo, TypeInfo};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum TCFieldType {
@@ -10,8 +10,7 @@ pub(crate) enum TCFieldType {
     },
     Option(Box<TCFieldType>),
     Struct {
-        // prefix: Vec<String>,
-        name: String,
+        name: String, // Only for debugging.
         fields: Vec<TCStructField>,
     },
     Unknown(String),
@@ -137,10 +136,13 @@ fn parse_type_path(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
                 type_info,
                 bevy_reflect::TypeInfo::Map(_) | bevy_reflect::TypeInfo::Opaque(_)
             ) {
-                return TCFieldType::Unknown(type_info.type_path().to_string());
+                TCFieldType::Unknown(type_info.type_path().to_string())
+            } else if let bevy_reflect::TypeInfo::Enum(enum_info) = type_info {
+                parse_enum_to_struct(enum_info, prefix)
+            } else {
+                // assume it is a struct.
+                parse_struct(type_info, prefix)
             }
-            // assume it is a struct.
-            parse_struct(type_info, prefix)
         }
     }
 }
@@ -186,6 +188,43 @@ fn parse_struct(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
 
     TCFieldType::Struct {
         name: struct_name.to_string(),
+        fields,
+    }
+}
+
+/// For enums we follow serde json so that arg extraction works.
+/// It is a struct with field name as the variant name.
+/// The field type is the inner type of the variant.
+fn parse_enum_to_struct(enum_info: &EnumInfo, prefix: Vec<String>) -> TCFieldType {
+    let fields = enum_info
+        .variant_names()
+        .iter()
+        .map(|v_name| {
+            // prost always use single tuple variant: Enum::VariantName(InnerType)
+            let v = enum_info.variant(v_name).unwrap();
+            let v = v.as_tuple_variant().unwrap_or_else(|_| {
+                panic!("Enum variant {v_name} is not a tuple variant");
+            });
+            assert_eq!(
+                v.field_len(),
+                1,
+                "Enum variant {v_name} does not have exactly one field"
+            );
+            let field = v.field_at(0).unwrap();
+            // construct a field for the enum
+            let field_name = v_name;
+            let mut prefix_inner = prefix.clone();
+            prefix_inner.push(field_name.to_string());
+            let field_type = parse_type_path(field.type_info().unwrap(), prefix_inner.clone());
+            TCStructField {
+                prefix: prefix.clone(), // struct fields them selfs should not contain its own field.
+                field_name: field_name.to_string(),
+                field_type,
+            }
+        })
+        .collect();
+    TCFieldType::Struct {
+        name: "AnonymousEnum".to_string(),
         fields,
     }
 }
