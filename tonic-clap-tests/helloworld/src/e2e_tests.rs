@@ -210,6 +210,8 @@ async fn server_test() {
             "f2",
             "--field3",
             "1",
+            "--opt_string",
+            "optstring",
         ],
     )
     .await;

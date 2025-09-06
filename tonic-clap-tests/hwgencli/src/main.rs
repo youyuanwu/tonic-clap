@@ -18,6 +18,11 @@ async fn main() -> Result<(), tonic_clap::Error> {
 
     let ctx = args.transport.make_channel()?;
 
+    if ctx.common.dry_run {
+        println!("dry run: {:?}", ctx.cmd);
+        return Ok(());
+    }
+
     let resp = ctx
         .cmd
         .execute(ctx.channel, ctx.common.json_data)
