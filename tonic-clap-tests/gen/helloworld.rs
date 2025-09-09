@@ -30,6 +30,8 @@ pub struct HelloRequest2 {
     pub field3: i32,
     #[prost(string, optional, tag = "5")]
     pub opt_string: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(uint64, optional, tag = "9")]
+    pub opt_u64: ::core::option::Option<u64>,
     #[prost(oneof = "hello_request2::OneOfField", tags = "6, 7, 8")]
     pub one_of_field: ::core::option::Option<hello_request2::OneOfField>,
 }

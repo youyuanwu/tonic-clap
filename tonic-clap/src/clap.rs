@@ -38,6 +38,7 @@ where
     // Convert the map to JSON Value
     let json_value = Value::Object(root_json);
 
+    tracing::debug!("Constructed JSON from args: {json_value}");
     // Use serde to deserialize directly into the target struct
     match serde_json::from_value::<T>(json_value) {
         Ok(instance) => Ok(instance),
@@ -103,6 +104,27 @@ fn extract_primitive_value(
                 None
             }
         }
+        TCFieldTypePrimitive::U32 => {
+            if let Ok(Some(value)) = matches.try_get_one::<u32>(arg_name) {
+                Some(Value::Number(serde_json::Number::from(*value)))
+            } else {
+                None
+            }
+        }
+        TCFieldTypePrimitive::U64 => {
+            if let Ok(Some(value)) = matches.try_get_one::<u64>(arg_name) {
+                Some(Value::Number(serde_json::Number::from(*value)))
+            } else {
+                None
+            }
+        }
+        TCFieldTypePrimitive::U8 => {
+            if let Ok(Some(value)) = matches.try_get_one::<u8>(arg_name) {
+                Some(Value::Number(serde_json::Number::from(*value)))
+            } else {
+                None
+            }
+        }
         TCFieldTypePrimitive::Bool => {
             if let Ok(Some(value)) = matches.try_get_one::<bool>(arg_name) {
                 Some(Value::Bool(*value))
@@ -126,14 +148,6 @@ fn extract_primitive_value(
                 } else {
                     None
                 }
-            }
-        }
-        _ => {
-            // Default to string for other types
-            if let Ok(Some(value)) = matches.try_get_one::<String>(arg_name) {
-                Some(Value::String(value.clone()))
-            } else {
-                None
             }
         }
     }

@@ -74,6 +74,10 @@ fn parse_type_path(type_info: &TypeInfo, prefix: Vec<String>) -> TCFieldType {
             field_type: TCFieldTypePrimitive::U32,
             required: true,
         },
+        "u64" => TCFieldType::Primitive {
+            field_type: TCFieldTypePrimitive::U64,
+            required: true,
+        },
         _ if type_path.starts_with("Vec<") && type_path.ends_with(">") => {
             let inner = &type_path[4..type_path.len() - 1];
             let list_info = if let bevy_reflect::TypeInfo::List(list_info) = type_info {
