@@ -53,6 +53,7 @@ message HelloRequest2 {
     // Internal one of field cannot be optional.
     int32 one_of_int = 8;
   }
+  optional uint64 opt_u64 = 9;
 }
 
 message OneOf1{

@@ -123,6 +123,7 @@ impl From<HelloRequest2Arg> for helloworld::HelloRequest2 {
                     one_of_str: "one_of_str_value".to_string(),
                 },
             )),
+            opt_u64: None,
         }
     }
 }

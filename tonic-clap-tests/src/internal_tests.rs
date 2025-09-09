@@ -82,6 +82,8 @@ fn test_reflection_based_parsing() {
             "0",
             "--one_of_field.OneOf1.one_of_str",
             "one_of_str_value",
+            "--opt_u64",
+            "42",
         ])
         .unwrap();
 
@@ -101,6 +103,7 @@ fn test_reflection_based_parsing() {
             }
         ))
     );
+    assert_eq!(hello_req.opt_u64, Some(42));
 }
 
 #[test]
@@ -285,6 +288,7 @@ fn test_enum_json() {
                 one_of_str: "one_of_str_value".to_string(),
             },
         )),
+        opt_u64: None,
     };
     // Json of the one of has the type name in the key.
     // So for the args generation enums should be treated as structs,

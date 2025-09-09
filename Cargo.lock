@@ -1495,7 +1495,7 @@ dependencies = [
 
 [[package]]
 name = "tonic-clap"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "bevy_reflect",
  "clap",
