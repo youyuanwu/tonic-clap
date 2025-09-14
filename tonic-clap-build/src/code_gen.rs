@@ -73,13 +73,12 @@ impl CodeGenBuilder {
         }
         // TODO: execution fn.
         let exe_fn = quote! {
-            impl CommandServices {
-                pub async fn execute(
+            impl tonic_clap::arg::ExecuteCmd for CommandServices {
+                async fn execute(
                     self,
                     ch: tonic::transport::Channel,
                     json_data: Option<String>,
                 ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {
-
                     match self {
                         #svc_call_stream
                     }
@@ -137,7 +136,7 @@ impl CodeGenBuilder {
         let client_name = quote::format_ident!("{}Client", svc.name);
         let client_mod_name = quote::format_ident!("{}_client", svc.name.to_snake_case());
         let exe_fn = quote! {
-            impl #svc_enum_name {
+            impl tonic_clap::arg::ExecuteCmd for #svc_enum_name {
                 async fn execute(
                     self,
                     ch: tonic::transport::Channel,
