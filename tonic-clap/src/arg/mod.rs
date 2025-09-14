@@ -146,3 +146,35 @@ pub struct CmdCtx<Sub> {
     pub common: CommonArgs,
     pub cmd: Sub,
 }
+
+/// Each service or combined service should implement this trait
+#[allow(async_fn_in_trait)]
+pub trait ExecuteCmd {
+    async fn execute(
+        self,
+        channel: tonic::transport::Channel,
+        json_data: Option<String>,
+    ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status>;
+}
+
+impl<Sub> DefaultArgs<Sub>
+where
+    Sub: clap::Subcommand + std::fmt::Debug + crate::arg::ExecuteCmd,
+{
+    // Default main function to run a CLI app built with `tonic-clap`.
+    pub async fn run_main(self) -> Result<(), crate::Error> {
+        let ctx = self.transport.make_channel()?;
+        if ctx.common.dry_run {
+            println!("dry run: {:?}", ctx.cmd);
+            return Ok(());
+        }
+
+        let resp = ctx
+            .cmd
+            .execute(ctx.channel, ctx.common.json_data)
+            .await
+            .expect("request failed");
+        println!("{:?}", resp);
+        Ok(())
+    }
+}

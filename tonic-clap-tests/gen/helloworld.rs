@@ -449,8 +449,8 @@ pub mod cli {
         #[command(subcommand)]
         Greeter2(Greeter2Commands),
     }
-    impl CommandServices {
-        pub async fn execute(
+    impl tonic_clap::arg::ExecuteCmd for CommandServices {
+        async fn execute(
             self,
             ch: tonic::transport::Channel,
             json_data: Option<String>,
@@ -466,7 +466,7 @@ pub mod cli {
         SayHello(super::HelloRequest),
         SayHello2(super::HelloRequest2),
     }
-    impl GreeterCommands {
+    impl tonic_clap::arg::ExecuteCmd for GreeterCommands {
         async fn execute(
             self,
             ch: tonic::transport::Channel,
@@ -497,7 +497,7 @@ pub mod cli {
         SayHello2(super::HelloRequest2),
         SayHello3(super::super::google::protobuf::Empty),
     }
-    impl Greeter2Commands {
+    impl tonic_clap::arg::ExecuteCmd for Greeter2Commands {
         async fn execute(
             self,
             ch: tonic::transport::Channel,

@@ -21,9 +21,9 @@ pub enum Greeter2Commands {
     SayHello2(HelloRequest2Arg),
 }
 
-impl GreeterCommands {
+impl tonic_clap::arg::ExecuteCmd for GreeterCommands {
     async fn execute(
-        &self,
+        self,
         ch: tonic::transport::Channel,
         json_data: Option<String>,
     ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {
@@ -38,7 +38,7 @@ impl GreeterCommands {
                 Ok(Box::new(c.say_hello(request).await?.into_inner()))
             }
             GreeterCommands::SayHello2(args) => {
-                let request = tonic::Request::new((*args).clone().into());
+                let request = tonic::Request::new(args.clone().into());
                 Ok(Box::new(c.say_hello2(request).await?.into_inner()))
             }
         }
@@ -65,9 +65,9 @@ impl Greeter2Commands {
     }
 }
 
-impl CommandServices {
-    pub async fn execute(
-        &self,
+impl tonic_clap::arg::ExecuteCmd for CommandServices {
+    async fn execute(
+        self,
         ch: tonic::transport::Channel,
         json_data: Option<String>,
     ) -> Result<Box<dyn std::fmt::Debug>, tonic::Status> {

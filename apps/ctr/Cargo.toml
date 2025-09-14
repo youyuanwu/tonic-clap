@@ -19,6 +19,7 @@ serde_json.workspace = true
 clap.workspace = true
 bevy_reflect.workspace = true
 tonic-clap = { workspace = true, features = ["openssl"] }
+tokio.workspace = true
 
 [build-dependencies]
 tonic-clap-build.workspace = true
