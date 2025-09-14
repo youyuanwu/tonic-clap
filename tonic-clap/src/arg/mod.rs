@@ -5,6 +5,9 @@ use clap::{Args, Parser, Subcommand};
 #[cfg(feature = "openssl")]
 pub mod openssl;
 
+#[cfg(feature = "autocomplete")]
+pub mod autocomplete;
+
 #[derive(Args, Debug)]
 pub struct CommonArgs {
     /// JSON data to convert to proto payload. Ignored when options are specified.
@@ -131,13 +134,16 @@ where
 /// Default arguments for tonic.
 /// User may write their own for other usecases.
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
 pub struct DefaultArgs<Sub>
 where
     Sub: clap::Subcommand + std::fmt::Debug,
 {
+    // If provided, outputs the completion file for given shell
+    #[cfg(feature = "autocomplete")]
+    #[command(flatten)]
+    pub generator: Option<autocomplete::AutoCompleteArgs>,
     #[command(subcommand)]
-    pub transport: TransportMode<Sub>,
+    pub transport: Option<TransportMode<Sub>>,
 }
 
 /// Stuff to return for user to call
@@ -163,7 +169,19 @@ where
 {
     // Default main function to run a CLI app built with `tonic-clap`.
     pub async fn run_main(self) -> Result<(), crate::Error> {
-        let ctx = self.transport.make_channel()?;
+        #[cfg(feature = "autocomplete")]
+        if self.generator.is_some() {
+            let generator = self.generator.unwrap();
+            if let Some(shell) = generator.generate_completion {
+                use clap::CommandFactory;
+                let mut cmd = Self::command();
+                // empty cmd does not have the binary name. So we get it from runtime.
+                let name = autocomplete::get_current_binary_name();
+                clap_complete::generate(shell, &mut cmd, name, &mut std::io::stdout());
+                return Ok(());
+            }
+        }
+        let ctx = self.transport.expect("no transport mode").make_channel()?;
         if ctx.common.dry_run {
             println!("dry run: {:?}", ctx.cmd);
             return Ok(());

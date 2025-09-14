@@ -14,12 +14,14 @@ description = "gRPC tonic cli generator core implementation."
 
 [features]
 openssl = ["dep:openssl", "dep:tonic-tls"]
+autocomplete = ["dep:clap_complete"]
 
 [dependencies]
 bevy_reflect.workspace = true
 serde_json.workspace = true
 serde.workspace = true
 clap.workspace = true
+clap_complete = {workspace = true, optional = true}
 tonic-clap-macros.workspace = true
 openssl = { workspace = true, optional = true}
 tonic.workspace = true

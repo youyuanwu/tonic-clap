@@ -28,6 +28,7 @@ tokio = {version = "1", features = ["process"]}
 tokio-util = "0.7"
 clap = { version = "4", features = ["derive", "string"] } # we rely on runtime string.
 clap_derive = "4"
+clap_complete = "4"
 proc-macro2 = "1"
 quote = "1"
 syn = "2"
@@ -38,6 +39,7 @@ bevy_reflect = { version = "0.16", default-features = false, features = ["std"] 
 openssl = "0.10"
 tracing = "0.1"
 tonic-tls = { version = "0.6", features = ["openssl"] }
+
 
 # crate in this workspace
 tonic-clap-build = { version = "0.2.1", path = "tonic-clap-build" }
