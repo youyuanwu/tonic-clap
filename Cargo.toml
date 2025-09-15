@@ -42,7 +42,7 @@ tonic-tls = { version = "0.6", features = ["openssl"] }
 
 
 # crate in this workspace
-tonic-clap-build = { version = "0.2.1", path = "tonic-clap-build" }
-tonic-clap-macros = { version = "0.2.1", path = "tonic-clap-macros" }
-tonic-clap = { version = "0.2.2", path = "tonic-clap" }
+tonic-clap-build = { version = "0.2", path = "tonic-clap-build" }
+tonic-clap-macros = { version = "0.2", path = "tonic-clap-macros" }
+tonic-clap = { version = "0.2", path = "tonic-clap" }
 tonic-clap-tests = { version = "0.1.0", path = "tonic-clap-tests" }
