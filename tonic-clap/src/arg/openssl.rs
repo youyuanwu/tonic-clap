@@ -93,6 +93,9 @@ impl OpensslArgs {
             ok
         });
 
+        // Enable ALPN for HTTP/2
+        builder.set_alpn_protos(tonic_tls::openssl::ALPN_H2_WIRE)?;
+
         Ok(builder)
     }
 }
