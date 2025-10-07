@@ -54,6 +54,12 @@ async fn run_client(addr: SocketAddr, more_args: &[&str], bin: &str) {
         app_args2.extend_from_slice(&app_args);
         crate::HWArgs::try_parse_from(app_args2).unwrap();
     }
+
+    if cfg!(feature = "llvm-cov-mode") {
+        // Do not build exe using cargo, since it takes a long time and no coverage info.
+        return;
+    }
+
     let mut child = Command::new("cargo")
         .current_dir("../") // workspace dir.
         .args(&cargo_args)
@@ -168,6 +174,7 @@ async fn server_test() {
 
 // ensures the ctr can show hwlp message
 #[tokio::test]
+#[cfg(not(feature = "llvm-cov-mode"))]
 async fn containerd_cli_compile_test() {
     let addr = "127.0.0.1:50051".parse().unwrap();
     let more_args = &["--help"];

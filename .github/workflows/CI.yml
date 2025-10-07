@@ -29,7 +29,7 @@ jobs:
     - name: Install rust stable
       uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: 1.89.0
+        toolchain: 1.90.0
         components: rustfmt, clippy
     
     - uses: taiki-e/install-action@protoc
@@ -52,7 +52,7 @@ jobs:
       run: cargo test --all -- --nocapture
 
     - name: Run llvm-cov
-      run: cargo llvm-cov --codecov --output-path codecov.json --include-build-script --ignore-filename-regex "tonic-clap-tests.*|apps.*"
+      run: cargo llvm-cov --codecov --output-path codecov.json --include-build-script --ignore-filename-regex "tonic-clap-tests.*|apps.*" --features llvm-cov-mode
 
     - name: Show cov summary
       run: cargo llvm-cov report --summary-only --include-build-script --ignore-filename-regex "tonic-clap-tests.*|apps.*"
