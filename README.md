@@ -1,4 +1,9 @@
 # tonic-clap
+![ci](https://github.com/youyuanwu/tonic-clap/actions/workflows/CI.yml/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://raw.githubusercontent.com/youyuanwu/tonic-clap/main/LICENSE)
+[![Crates.io](https://img.shields.io/crates/v/tonic-clap)](https://crates.io/crates/tonic-clap)
+[![Documentation](https://docs.rs/tonic-clap/badge.svg)](https://docs.rs/tonic-clap)
+
 Auto generate [tonic](https://github.com/hyperium/tonic) and [clap](https://github.com/clap-rs/clap) gRPC CLI (commandline) tool from proto definition.
 
 Features:
